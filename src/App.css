@@ -1,42 +1,111 @@
-#root {
-  max-width: 1280px;
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f4f6f8;
+  color: #333;
+}
+
+.app-container {
+  text-align: center;
+  min-height: 100vh;
+}
+
+.header {
+  background-color: #03244D;
+  color: white;
+  padding: 25px 20px;
+  border-bottom: 6px solid #DD550C;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 2.8rem;
+  letter-spacing: 1.5px;
+}
+
+.main-menu {
+  padding: 40px 20px;
+}
+
+.main-menu h2 {
+  color: #03244D;
+  margin-bottom: 30px;
+  font-size: 2rem;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 25px;
+  max-width: 650px;
   margin: 0 auto;
-  padding: 2rem;
+}
+
+.hub-button {
+  background-color: white;
+  color: #03244D;
+  border: 2px solid #03244D;
+  padding: 25px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.hub-button:hover {
+  background-color: #03244D;
+  color: white;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(3, 36, 77, 0.3);
+  border-color: #DD550C;
+}
+
+.feature-container {
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: #DD550C;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.back-button:hover {
+  text-decoration: underline;
+}
+
+.id-card {
+  background: linear-gradient(135deg, #03244D, #053b7d);
+  color: white;
+  width: 350px;
+  border-radius: 15px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+  overflow: hidden;
+  text-align: left;
+}
+
+.id-header {
+  background-color: #DD550C;
+  padding: 15px;
+  font-weight: bold;
+  font-size: 1.2rem;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.id-body {
+  padding: 20px;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
+.id-details h3 { margin: 0 0 5px 0; font-size: 1.8rem; }
+.id-details p { margin: 5px 0; color: #cbd5e1; }
+.id-footer { background-color: rgba(0,0,0,0.2); padding: 10px; text-align: center; font-size: 0.9rem;}
