@@ -15,6 +15,7 @@ function StudentHub({ goBack }) {
       </button>
       <h2>Student Hub</h2>
       
+      {/* This className is what creates the grid layout! */}
       <div className="button-grid">
         <button className="hub-button" onClick={() => setActiveFeature('TigerCard')}>
           Tiger Card
