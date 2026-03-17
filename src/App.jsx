@@ -1,35 +1,58 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import StudentHub from './StudentHub'
 
 function App() {
-  const [count, setCount] = useState(0)
+
+  const [currentScreen, setCurrentScreen] = useState('Home');
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f4f4f9', fontFamily: 'sans-serif' }}>
+      {/* Top Navigation Bar */}
+      <nav style={{ backgroundColor: '#03244d', color: 'white', padding: '15px', textAlign: 'center' }}>
+        <h1 style={{ margin: 0 }}>Auburn Super App</h1>
+      </nav>
+
+      <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+        
+        {/* MAIN MENU */}
+        {currentScreen === 'Home' && (
+          <div style={{ textAlign: 'center', marginTop: '50px' }}>
+            <h2 style={{ color: '#03244d' }}>Main Menu</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '30px' }}>
+              <button onClick={() => setCurrentScreen('StudentHub')} style={hubButtonStyle}>Student Hub</button>
+              <button onClick={() => console.log('Faculty Hub coming soon')} style={hubButtonStyle}>Faculty/Staff Hub</button>
+              <button onClick={() => console.log('Parent Hub coming soon')} style={hubButtonStyle}>Parent Hub</button>
+              <button onClick={() => console.log('Fan Hub coming soon')} style={hubButtonStyle}>Fan Hub</button>
+            </div>
+          </div>
+        )}
+
+        {/* STUDENT HUB */}
+        {currentScreen === 'StudentHub' && (
+          <div>
+            <button 
+              onClick={() => setCurrentScreen('Home')} 
+              style={{ marginBottom: '20px', cursor: 'pointer', padding: '10px' }}
+            >
+              ← Back to Main Menu
+            </button>
+            <StudentHub />
+          </div>
+        )}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </div>
   )
 }
+
+const hubButtonStyle = {
+  padding: '30px',
+  fontSize: '18px',
+  backgroundColor: '#fff',
+  border: '2px solid #03244d',
+  borderRadius: '12px',
+  color: '#03244d',
+  fontWeight: 'bold',
+  cursor: 'pointer'
+};
 
 export default App
