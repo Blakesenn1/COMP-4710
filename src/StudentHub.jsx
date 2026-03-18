@@ -1,4 +1,8 @@
-// Your complete Information Architecture stored as clean data!
+import React, { useState } from 'react';
+import TigerCard from './TigerCard';
+import RateMyProfessor from './RateMyProfessor';
+import AcademicPortal from './AcademicPortal'; // NEW IMPORT
+
 const menuData = [
   {
     id: 'academics',
@@ -61,3 +65,68 @@ const menuData = [
     ]
   }
 ];
+
+function StudentHub({ goBack }) {
+  const [expandedCategory, setExpandedCategory] = useState(null);
+  const [activeFeature, setActiveFeature] = useState(null);
+
+  const toggleCategory = (categoryId) => {
+    setExpandedCategory(expandedCategory === categoryId ? null : categoryId);
+  };
+
+  const handleFeatureClick = (featureId) => {
+    // List of features that actually have code written for them
+    const implementedFeatures = ['RateMyProfessor', 'TigerCard', 'AcademicPortal'];
+    
+    if (implementedFeatures.includes(featureId)) {
+      setActiveFeature(featureId);
+    } else {
+      alert("This feature is currently under construction!");
+    }
+  };
+
+  // --- FEATURE ROUTING ---
+  if (activeFeature === 'TigerCard') return <TigerCard goBack={() => setActiveFeature(null)} />;
+  if (activeFeature === 'RateMyProfessor') return <RateMyProfessor goBack={() => setActiveFeature(null)} />;
+  if (activeFeature === 'AcademicPortal') return <AcademicPortal goBack={() => setActiveFeature(null)} />;
+
+  return (
+    <div className="main-menu">
+      <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', marginBottom: '20px' }}>
+        <button className="back-button" onClick={goBack}>&larr; Back</button>
+      </div>
+      
+      <h2 style={{ color: '#03244D', marginBottom: '30px' }}>Student Hub</h2>
+
+      <div className="accordion-container">
+        {menuData.map((category) => (
+          <div key={category.id} className="accordion-card">
+            <div className="accordion-header" onClick={() => toggleCategory(category.id)}>
+              <div className="header-left">
+                <span className="accordion-icon">{category.icon}</span>
+                <span>{category.title}</span>
+              </div>
+              <span>{expandedCategory === category.id ? '▼' : '▶'}</span>
+            </div>
+
+            {expandedCategory === category.id && (
+              <div className="accordion-body">
+                {category.features.map((feature) => (
+                  <button 
+                    key={feature.id} 
+                    className="accordion-item"
+                    onClick={() => handleFeatureClick(feature.id)}
+                  >
+                    {feature.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default StudentHub;
