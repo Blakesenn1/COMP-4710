@@ -1,26 +1,92 @@
+/* --- Global Container --- */
+.app-container {
+  min-height: 100vh;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+/* --- Home Screen (App.jsx) --- */
+.home-card {
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+  margin-top: 60px;
+}
+
+.main-title {
+  color: #03244D;
+  font-size: 3rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.main-subtitle {
+  color: #DD550C;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 60px;
+}
+
+.hub-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hub-selection-button {
+  background: white;
+  border: 1px solid #e2e8f0;
+  padding: 22px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hub-selection-button:hover {
+  background: #03244D;
+  color: white;
+}
+
+/* --- Student Hub Accordion (StudentHub.jsx) --- */
 .accordion-header {
   background-color: #03244D;
   color: white;
   padding: 18px 20px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   cursor: pointer;
   font-weight: bold;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  border-radius: 8px; /* Added slight rounding to match your screen */
+}
+
+.accordion-body {
+  padding: 15px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .accordion-item {
   padding: 15px;
-  background-color: #f8fafc;
+  background: #f8fafc;
   border: none;
   border-left: 4px solid #DD550C;
-  cursor: pointer;
-  color: #333;
   text-align: left;
-  font-size: 1rem;
-  margin-top: 5px;
-  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.back-button {
+  background: #e2e8f0;
+  border: none;
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
 }

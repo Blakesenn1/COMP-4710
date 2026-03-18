@@ -83,17 +83,13 @@ function StudentHub({ goBack }) {
     }
   };
 
-  // --- FEATURE VIEWS ---
   if (activeFeature === 'TigerCard') return <TigerCard goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'RateMyProfessor') return <RateMyProfessor goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'AcademicPortal') return <AcademicPortal goBack={() => setActiveFeature(null)} />;
 
   return (
-    <div className="main-menu">
-      <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', marginBottom: '20px' }}>
-        <button className="back-button" onClick={goBack}>&larr; Back</button>
-      </div>
-      
+    <div className="main-menu" style={{ width: '100%', maxWidth: '600px' }}>
+      <button className="back-button" onClick={goBack} style={{ marginBottom: '20px' }}>&larr; Back</button>
       <h2 style={{ color: '#03244D', marginBottom: '30px', textAlign: 'left' }}>Student Hub</h2>
 
       <div className="accordion-container">
