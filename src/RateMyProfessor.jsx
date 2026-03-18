@@ -64,7 +64,7 @@ function RateMyProfessor({ goBack }) {
       <div style={{ width: '100%', display: 'flex', gap: '10px', marginBottom: '30px' }}>
         <input
           type="text"
-          placeholder="e.g., Gerry Dozier"
+          placeholder="e.g., John Doe"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={handleKeyDown}
