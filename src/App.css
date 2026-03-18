@@ -1,71 +1,63 @@
-/* --- Accordion Menu Styles --- */
-.accordion-container {
-  max-width: 600px;
-  margin: 0 auto;
+/* --- Updated Minimalist Home Screen --- */
+.app-container {
+  min-height: 100vh;
+  background: #f8fafc; /* Very light clean gray */
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  padding: 10px;
-}
-
-.accordion-card {
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.accordion-header {
-  background-color: #03244D; /* Auburn Navy */
-  color: white;
-  padding: 15px 20px;
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  font-weight: bold;
+  padding: 40px 20px;
+}
+
+.home-card {
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+  margin-top: 60px;
+}
+
+.main-title {
+  color: #03244D;
+  font-size: 3rem;
+  margin-bottom: 5px;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  text-transform: uppercase;
+}
+
+.main-subtitle {
+  color: #DD550C;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 60px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.hub-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.hub-selection-button {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+  padding: 22px;
+  border-radius: 4px; /* Sharper edges for a more professional look */
+  font-weight: 700;
+  font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  transition: background-color 0.2s;
-}
-
-.accordion-header:hover {
-  background-color: #053b7d;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-}
-
-.accordion-icon {
-  margin-right: 15px;
-  font-size: 1.2rem;
-}
-
-.accordion-body {
-  padding: 15px;
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.accordion-item {
-  padding: 15px;
-  background-color: #f8fafc;
-  border: none;
-  border-left: 4px solid #DD550C; /* Auburn Orange Accent */
   cursor: pointer;
-  color: #333;
-  text-align: left;
-  font-size: 1rem;
-  font-family: inherit;
   transition: all 0.2s ease;
-  border-radius: 0 4px 4px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.accordion-item:hover {
-  background-color: #f1f5f9;
-  transform: translateX(5px); /* Slides slightly right on hover */
+.hub-selection-button:hover {
+  border-color: #03244D;
+  background: #03244D;
+  color: white;
+  transform: scale(1.02);
 }
