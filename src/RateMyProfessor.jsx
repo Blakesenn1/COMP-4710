@@ -14,8 +14,7 @@ function RateMyProfessor({ goBack }) {
     setError("");
 
     try {
-      const response = await fetch(`http://localhost:3000/api/rmp?name=${encodeURIComponent(searchTerm)}`);
-      
+      const response = await fetch(`https://comp-4710.onrender.com/api/rmp?name=${encodeURIComponent(searchTerm)}`);
       if (!response.ok) {
         throw new Error("Server error");
       }
