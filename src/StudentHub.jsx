@@ -1,69 +1,63 @@
-import React, { useState } from 'react';
-import TigerCard from './TigerCard';
-import RateMyProfessor from './RateMyProfessor';
-
-function StudentHub({ goBack }) {
-  const [activeCategory, setActiveCategory] = useState(null);
-  const [activeFeature, setActiveFeature] = useState(null);
-
-  if (activeFeature === 'TigerCard') {
-    return <TigerCard goBack={() => setActiveFeature(null)} />;
+// Your complete Information Architecture stored as clean data!
+const menuData = [
+  {
+    id: 'academics',
+    title: 'Academics & Career',
+    icon: '🎓',
+    features: [
+      { id: 'RateMyProfessor', name: 'Rate My Professor' },
+      { id: 'AcademicPortal', name: 'Academic Portal' },
+      { id: 'CareerHub', name: 'Career Hub' }
+    ]
+  },
+  {
+    id: 'campusLife',
+    title: 'Campus Life & Dining',
+    icon: '🍕',
+    features: [
+      { id: 'DiningCritic', name: 'Tiger Dining Critic' },
+      { id: 'Involvement', name: 'The Involvement Explorer' },
+      { id: 'EventRadar', name: 'Campus Event Radar' }
+    ]
+  },
+  {
+    id: 'finance',
+    title: 'Finances & Billing',
+    icon: '💰', 
+    features: [
+      { id: 'TigerCard', name: 'Digital Tiger Card' },
+      { id: 'eBill', name: 'Mock eBill & Tuition' },
+      { id: 'DiningBudgeter', name: 'Dining Dollars Budgeter' }
+    ]
+  },
+  {
+    id: 'housing',
+    title: 'Housing & Living',
+    icon: '🏠',
+    features: [
+      { id: 'DormExplorer', name: 'Interactive Dorm Explorer' },
+      { id: 'Maintenance', name: 'Maintenance Request Portal' },
+      { id: 'Roommate', name: 'Roommate Agreement Builder' }
+    ]
+  },
+  {
+    id: 'safety',
+    title: 'Safety & Wellness',
+    icon: '🚨', 
+    features: [
+      { id: 'BlueLight', name: 'Digital Blue Light' },
+      { id: 'TipLine', name: 'Anonymous Tip Line' },
+      { id: 'Alerts', name: 'Auburn Alerts History' }
+    ]
+  },
+  {
+    id: 'transportation',
+    title: 'Transportation & Parking',
+    icon: '🚌',
+    features: [
+      { id: 'TransitMap', name: 'Live Tiger Transit Map' },
+      { id: 'Shuttle', name: 'Late-Night Free Shuttle' },
+      { id: 'Parking', name: 'Campus Parking Status' }
+    ]
   }
-  if (activeFeature === 'RateMyProfessor') {
-    return <RateMyProfessor goBack={() => setActiveFeature(null)} />;
-  }
-
-  if (activeCategory === 'Academics') {
-    return (
-      <div className="main-menu">
-        <button className="back-button" onClick={() => setActiveCategory(null)}>
-          &larr; Back to Categories
-        </button>
-        <h2>Academics & Career</h2>
-        <div className="button-grid">
-          <button className="hub-button" onClick={() => setActiveFeature('RateMyProfessor')}>
-            Rate My Professor
-          </button>
-          <button className="hub-button" onClick={() => alert("Academic Portal coming soon!")}>
-            Academic Portal
-          </button>
-          <button className="hub-button" onClick={() => alert("Career Hub coming soon!")}>
-            Career & Co-Op Hub
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="main-menu">
-      <button className="back-button" onClick={goBack}>
-        &larr; Back to Main Menu
-      </button>
-      <h2>Student Hub</h2>
-      
-      <div className="button-grid">
-        <button className="hub-button" onClick={() => setActiveCategory('Academics')}>
-          Academics & Career
-        </button>
-        <button className="hub-button" onClick={() => alert("Campus Life & Dining coming soon!")}>
-          Campus Life & Dining
-        </button>
-        <button className="hub-button" onClick={() => setActiveFeature('TigerCard')}>
-          Finances & Billing
-        </button>
-        <button className="hub-button" onClick={() => alert("Housing & Living coming soon!")}>
-          Housing & Living
-        </button>
-        <button className="hub-button" onClick={() => alert("Safety & Wellness coming soon!")}>
-          Safety & Wellness
-        </button>
-        <button className="hub-button" onClick={() => alert("Transportation & Parking coming soon!")}>
-          Transportation & Parking
-        </button>
-      </div>
-    </div>
-  );
-}
-
-export default StudentHub;
+];
