@@ -5,9 +5,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Auburn University's official RateMyProfessor GraphQL ID
-const AUBURN_SCHOOL_ID = "U2Nob29sLTQ0";
-
 app.get('/api/rmp', async (req, res) => {
   const professorName = req.query.name;
   
@@ -15,7 +12,7 @@ app.get('/api/rmp', async (req, res) => {
     return res.status(400).json({ error: "Please provide a professor name." });
   }
 
-  console.log(`[SCRAPER] Searching specifically inside Auburn University for: ${professorName}...`);
+  console.log(`[SCRAPER] Searching for: ${professorName}...`);
 
   try {
     const response = await fetch('https://www.ratemyprofessors.com/graphql', {
@@ -25,10 +22,12 @@ app.get('/api/rmp', async (req, res) => {
         'Authorization': 'Basic dGVzdDp0ZXN0' 
       },
       body: JSON.stringify({
+        // 1. Hardcoded the School ID directly into the query string
+        // 2. Added 'first: 50' to ensure we pull enough records to find the match
         query: `
-          query ($text: String!, $schoolID: ID!) {
+          query ($text: String!) {
             newSearch {
-              teachers(query: {text: $text, schoolID: $schoolID}) {
+              teachers(query: {text: $text, schoolID: "U2Nob29sLTQ0"}, first: 50) {
                 edges {
                   node {
                     id
@@ -48,22 +47,32 @@ app.get('/api/rmp', async (req, res) => {
           }
         `,
         variables: {
-          text: professorName,
-          schoolID: AUBURN_SCHOOL_ID
+          text: professorName
         }
       })
     });
 
     const data = await response.json();
     
+    // Log any hidden GraphQL errors to the terminal so we can see them!
+    if (data.errors) {
+        console.error("[SCRAPER] GraphQL Error from RMP:", data.errors);
+        return res.json([]);
+    }
+
     if (!data.data || !data.data.newSearch) {
        console.log("[SCRAPER] Unexpected API response format.");
        return res.json([]);
     }
 
-    const auburnTeachers = data.data.newSearch.teachers.edges.map(edge => edge.node);
+    const allTeachers = data.data.newSearch.teachers.edges.map(edge => edge.node);
     
-    console.log(`[SCRAPER] Found ${auburnTeachers.length} matches at Auburn.`);
+    // The Double-Check: Ensure they are actually Auburn staff
+    const auburnTeachers = allTeachers.filter(teacher => 
+      teacher.school && teacher.school.name === 'Auburn University'
+    );
+    
+    console.log(`[SCRAPER] Found ${auburnTeachers.length} Auburn matches for "${professorName}".`);
     
     res.json(auburnTeachers);
 
