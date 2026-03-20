@@ -5,51 +5,65 @@ function RateMyProfessor({ goBack }) {
   const [suggestions, setSuggestions] = useState([]);
   const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false);
   
-  const [resultsList, setResultsList] = useState([]); // NEW: Holds multiple search results
-  const [profData, setProfData] = useState(null); // Holds the single selected professor
+  const [resultsList, setResultsList] = useState([]); 
+  const [profData, setProfData] = useState(null); 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // --- 1. LIVE AUTOCOMPLETE (DEBOUNCED) ---
+  // --- 1. OPTIMIZED LIVE AUTOCOMPLETE ---
   useEffect(() => {
+    // Create the AbortController to cancel traffic jams
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+
     const delayDebounceFn = setTimeout(async () => {
-      if (searchTerm.trim().length >= 2 && !profData) {
+      // Only search if they typed at least 3 letters to prevent massive broad searches
+      if (searchTerm.trim().length >= 3 && !profData) {
         setIsSearchingSuggestions(true);
         try {
-          const response = await fetch(`https://comp-4710.onrender.com/api/rmp?name=${encodeURIComponent(searchTerm)}`);
+          const response = await fetch(
+            `https://comp-4710.onrender.com/api/rmp?name=${encodeURIComponent(searchTerm.trim())}`, 
+            { signal } // Pass the abort signal to the fetch request
+          );
+          
           if (response.ok) {
             const data = await response.json();
-            // Safety check to ensure the backend actually returned a list
             if (Array.isArray(data)) {
               setSuggestions(data.slice(0, 5));
             }
           }
         } catch (err) {
-          console.error("Autocomplete fetch error (Server might be waking up):", err);
+          // Ignore the error if we intentionally aborted the fetch
+          if (err.name !== 'AbortError') {
+            console.error("Autocomplete error:", err);
+          }
         } finally {
           setIsSearchingSuggestions(false);
         }
       } else {
         setSuggestions([]);
       }
-    }, 500); // 500ms delay
+    }, 600); // Wait 600ms after typing stops
 
-    return () => clearTimeout(delayDebounceFn);
+    // CLEANUP: If the user types another letter, cancel the timer AND cancel the fetch!
+    return () => {
+      clearTimeout(delayDebounceFn);
+      abortController.abort(); 
+    };
   }, [searchTerm, profData]);
 
   // --- 2. MAIN SEARCH FUNCTION ---
   const handleSearch = async (selectedProf = null) => {
-    // Clear previous UI states
     setSuggestions([]);
     setError("");
 
-    // SCENARIO A: They clicked a specific professor from the dropdown or the results list
+    // SCENARIO A: Clicked from dropdown or results list
     if (selectedProf) {
       setSearchTerm(`${selectedProf.firstName} ${selectedProf.lastName}`);
-      setResultsList([]); // Hide the list
+      setResultsList([]); 
       setProfData({
         name: `${selectedProf.firstName} ${selectedProf.lastName}`,
-        department: selectedProf.department,
+        department: selectedProf.department || "Professor",
         rating: selectedProf.avgRating,
         difficulty: selectedProf.avgDifficulty,
         numRatings: selectedProf.numRatings
@@ -57,7 +71,7 @@ function RateMyProfessor({ goBack }) {
       return;
     }
 
-    // SCENARIO B: They typed a partial name (like "gerr") and clicked the Search button
+    // SCENARIO B: Typed a partial name and clicked the orange Search button
     if (!searchTerm.trim()) return;
     
     setIsLoading(true);
@@ -65,31 +79,31 @@ function RateMyProfessor({ goBack }) {
     setResultsList([]);
 
     try {
-      const response = await fetch(`https://comp-4710.onrender.com/api/rmp?name=${encodeURIComponent(searchTerm)}`);
+      const response = await fetch(`https://comp-4710.onrender.com/api/rmp?name=${encodeURIComponent(searchTerm.trim())}`);
       if (!response.ok) throw new Error("Server error");
       const data = await response.json();
 
       if (Array.isArray(data) && data.length > 0) {
         if (data.length === 1) {
-          // Exactly one match found, show the card immediately
+          // Exactly one match found (e.g., they typed "Dozier")
           const prof = data[0]; 
           setProfData({
             name: `${prof.firstName} ${prof.lastName}`,
-            department: prof.department,
+            department: prof.department || "Professor",
             rating: prof.avgRating,
             difficulty: prof.avgDifficulty,
             numRatings: prof.numRatings
           });
         } else {
-          // Multiple matches found! Show a list so they can pick.
+          // Multiple matches found (e.g., they typed "Gerry" and there are multiple Gerrys)
           setResultsList(data);
         }
       } else {
-        setError(`No Auburn professors found matching "${searchTerm}".`);
+        setError(`No Auburn professors found matching "${searchTerm}". Try another name.`);
       }
     } catch (err) {
       console.error("Fetch error:", err);
-      setError("Could not connect to the database. The Render server might be waking up, please try again in 30 seconds.");
+      setError("Could not connect to the database. The server might be waking up.");
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +123,7 @@ function RateMyProfessor({ goBack }) {
       
       <h2 style={{color: '#03244D', width: '100%', textAlign: 'left', marginTop: '0'}}>Rate My Professor</h2>
       <p style={{ color: '#555', width: '100%', textAlign: 'left', marginBottom: '25px' }}>
-        Search any Auburn professor by first name, last name, or both.
+        Search any Auburn professor by first name, last name, or full name.
       </p>
 
       {/* --- Search Interface --- */}
@@ -117,7 +131,7 @@ function RateMyProfessor({ goBack }) {
         <div style={{ flex: 1, position: 'relative' }}>
           <input
             type="text"
-            placeholder="e.g., Gerr..."
+            placeholder="e.g., Dozier"
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -152,7 +166,7 @@ function RateMyProfessor({ goBack }) {
                 >
                   <strong style={{color: '#03244D'}}>{prof.firstName} {prof.lastName}</strong>
                   <span style={{fontSize: '0.8rem', color: '#666', background: '#e2e8f0', padding: '4px 8px', borderRadius: '4px'}}>
-                    {prof.department}
+                    {prof.department || 'Auburn'}
                   </span>
                 </div>
               ))}
@@ -175,15 +189,9 @@ function RateMyProfessor({ goBack }) {
         </button>
       </div>
 
-      {/* --- Loading & Error States --- */}
-      {isLoading && (
-        <div style={{ padding: '40px', textAlign: 'center', color: '#03244D' }}>
-          <h3>🔄 Waking up database... (This may take 30s)</h3>
-        </div>
-      )}
-
+      {/* --- Error States --- */}
       {error && !isLoading && (
-        <div style={{ padding: '20px', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '4px', width: '100%', textAlign: 'center', border: '1px solid #f87171' }}>
+        <div style={{ padding: '20px', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '4px', width: '100%', textAlign: 'center', border: '1px solid #f87171', marginBottom: '20px' }}>
           <strong>{error}</strong>
         </div>
       )}
@@ -206,7 +214,7 @@ function RateMyProfessor({ goBack }) {
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.transform = 'translateX(0)'; }}
             >
               <span style={{fontSize: '1.1rem', fontWeight: 'bold', color: '#03244D'}}>{prof.firstName} {prof.lastName}</span>
-              <span style={{fontSize: '0.85rem', color: '#64748b'}}>{prof.department}</span>
+              <span style={{fontSize: '0.85rem', color: '#64748b'}}>{prof.department || 'Auburn'}</span>
             </button>
           ))}
         </div>
