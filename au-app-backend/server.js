@@ -12,7 +12,7 @@ app.get('/api/rmp', async (req, res) => {
     return res.status(400).json({ error: "Please provide a professor name." });
   }
 
-  console.log(`[SCRAPER] Searching for: ${professorName}...`);
+  console.log(`[SCRAPER] Searching Auburn (School 44) for: ${professorName}...`);
 
   try {
     const response = await fetch('https://www.ratemyprofessors.com/graphql', {
@@ -22,8 +22,6 @@ app.get('/api/rmp', async (req, res) => {
         'Authorization': 'Basic dGVzdDp0ZXN0' 
       },
       body: JSON.stringify({
-        // 1. Hardcoded the School ID directly into the query string
-        // 2. Added 'first: 50' to ensure we pull enough records to find the match
         query: `
           query ($text: String!) {
             newSearch {
@@ -54,25 +52,19 @@ app.get('/api/rmp', async (req, res) => {
 
     const data = await response.json();
     
-    // Log any hidden GraphQL errors to the terminal so we can see them!
     if (data.errors) {
-        console.error("[SCRAPER] GraphQL Error from RMP:", data.errors);
+        console.error("[SCRAPER] GraphQL Error:", data.errors);
         return res.json([]);
     }
 
     if (!data.data || !data.data.newSearch) {
-       console.log("[SCRAPER] Unexpected API response format.");
+       console.log("[SCRAPER] Unexpected API format.");
        return res.json([]);
     }
 
-    const allTeachers = data.data.newSearch.teachers.edges.map(edge => edge.node);
+    const auburnTeachers = data.data.newSearch.teachers.edges.map(edge => edge.node);
     
-    // The Double-Check: Ensure they are actually Auburn staff
-    const auburnTeachers = allTeachers.filter(teacher => 
-      teacher.school && teacher.school.name === 'Auburn University'
-    );
-    
-    console.log(`[SCRAPER] Found ${auburnTeachers.length} Auburn matches for "${professorName}".`);
+    console.log(`[SCRAPER] Sending ${auburnTeachers.length} results to the app.`);
     
     res.json(auburnTeachers);
 
