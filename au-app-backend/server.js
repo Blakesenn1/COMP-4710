@@ -12,7 +12,11 @@ app.get('/api/rmp', async (req, res) => {
     return res.status(400).json({ error: "Please provide a professor name." });
   }
 
-  console.log(`[SCRAPER] Searching specifically inside Auburn (School 44) for: "${professorName}"...`);
+  // 1. THE WIDE NET: Grab the LAST word the user typed to cast a wide net in the database
+  const nameParts = professorName.trim().split(' ');
+  const rmpSearchQuery = nameParts[nameParts.length - 1]; 
+
+  console.log(`[SCRAPER] User typed "${professorName}". Asking RMP for "${rmpSearchQuery}"...`);
 
   try {
     const response = await fetch('https://www.ratemyprofessors.com/graphql', {
@@ -34,9 +38,6 @@ app.get('/api/rmp', async (req, res) => {
                     avgRating
                     avgDifficulty
                     numRatings
-                    school {
-                      name
-                    }
                   }
                 }
               }
@@ -44,26 +45,28 @@ app.get('/api/rmp', async (req, res) => {
           }
         `,
         variables: {
-          // Send exactly what the user typed, no "Auburn" keyword hacks!
-          text: professorName.trim() 
+          text: rmpSearchQuery 
         }
       })
     });
 
     const data = await response.json();
-    
-    if (data.errors) {
-        console.error("[SCRAPER] GraphQL Error:", data.errors);
-        return res.status(500).json({ error: "RMP rejected the query." });
-    }
-
-    // Safely extract the array of teachers straight from the database
     const teachers = data.data?.newSearch?.teachers?.edges?.map(edge => edge.node) || [];
     
-    console.log(`[SCRAPER] Found ${teachers.length} matches inside Auburn University.`);
+    // 2. THE STRICT FILTER: Destroy RMP's "Fallback" garbage.
+    // We force the results to actually match the exact letters the user typed.
+    const searchTerms = professorName.toLowerCase().trim().split(' ');
+
+    const filteredTeachers = teachers.filter(teacher => {
+      const fullName = `${teacher.firstName} ${teacher.lastName}`.toLowerCase();
+      // Ensure EVERY word the user typed exists in the professor's name
+      // If they type "dozi", "Elizabeth Devore" will fail this test and get deleted.
+      return searchTerms.every(term => fullName.includes(term));
+    });
+
+    console.log(`[SCRAPER] RMP returned ${teachers.length} raw results. Strict filter narrowed it down to ${filteredTeachers.length} actual matches.`);
     
-    // Send them directly to the app! No strict .filter() that might accidentally drop Hugh Kwon.
-    res.json(teachers);
+    res.json(filteredTeachers);
 
   } catch (error) {
     console.error("[SCRAPER] Error:", error);
