@@ -18,8 +18,9 @@ function RateMyProfessor({ goBack }) {
       if (searchTerm.trim().length >= 2 && !profData) {
         setIsSearchingSuggestions(true);
         try {
+          // SWAPPED BACK TO RENDER URL
           const response = await fetch(
-            `http://localhost:3000/api/rmp?name=${encodeURIComponent(searchTerm.trim())}`, 
+            `https://comp-4710.onrender.com/api/rmp?name=${encodeURIComponent(searchTerm.trim())}`, 
             { signal: abortController.signal } 
           );
           
@@ -66,7 +67,8 @@ function RateMyProfessor({ goBack }) {
     setResultsList([]);
 
     try {
-      const response = await fetch(`http://localhost:3000/api/rmp?name=${encodeURIComponent(searchTerm.trim())}`);
+      // SWAPPED BACK TO RENDER URL
+      const response = await fetch(`https://comp-4710.onrender.com/api/rmp?name=${encodeURIComponent(searchTerm.trim())}`);
       if (!response.ok) throw new Error("Server error");
       const data = await response.json();
 
@@ -80,7 +82,7 @@ function RateMyProfessor({ goBack }) {
         setError(`No Auburn professors found matching "${searchTerm}".`);
       }
     } catch (err) {
-      setError("Could not connect to the backend server.");
+      setError("Could not connect to the backend server. The Render instance might be waking up.");
     } finally {
       setIsLoading(false);
     }
