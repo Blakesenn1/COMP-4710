@@ -12,7 +12,7 @@ app.get('/api/rmp', async (req, res) => {
     return res.status(400).json({ error: "Please provide a professor name." });
   }
 
-  console.log(`[SCRAPER] Searching Auburn (School 44) for: ${professorName}...`);
+  console.log(`[SCRAPER] Searching globally for: "${professorName}"...`);
 
   try {
     const response = await fetch('https://www.ratemyprofessors.com/graphql', {
@@ -25,10 +25,9 @@ app.get('/api/rmp', async (req, res) => {
         query: `
           query ($text: String!) {
             newSearch {
-              teachers(query: {text: $text, schoolID: "U2Nob29sLTQ0"}, first: 50) {
+              teachers(query: {text: $text}, first: 100) {
                 edges {
                   node {
-                    id
                     firstName
                     lastName
                     department
@@ -54,18 +53,18 @@ app.get('/api/rmp', async (req, res) => {
     
     if (data.errors) {
         console.error("[SCRAPER] GraphQL Error:", data.errors);
-        return res.json([]);
+        return res.status(500).json({ error: "RMP rejected the query." });
     }
 
-    if (!data.data || !data.data.newSearch) {
-       console.log("[SCRAPER] Unexpected API format.");
-       return res.json([]);
-    }
-
-    const auburnTeachers = data.data.newSearch.teachers.edges.map(edge => edge.node);
+    const teachers = data.data?.newSearch?.teachers?.edges?.map(edge => edge.node) || [];
     
-    console.log(`[SCRAPER] Sending ${auburnTeachers.length} results to the app.`);
+    // The Safe Filter: Checks if the school name contains "Auburn"
+    // This safely catches "Auburn University" or "Auburn University Montgomery"
+    const auburnTeachers = teachers.filter(teacher => 
+      teacher.school && teacher.school.name.includes('Auburn')
+    );
     
+    console.log(`[SCRAPER] Found ${auburnTeachers.length} Auburn matches out of ${teachers.length} global results.`);
     res.json(auburnTeachers);
 
   } catch (error) {
@@ -74,7 +73,7 @@ app.get('/api/rmp', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`Auburn App Backend running on port ${PORT}`);
+  console.log(`Auburn App Backend running on http://localhost:${PORT}`);
 });
