@@ -15,19 +15,31 @@ function RateMyProfessor({ goBack }) {
     const abortController = new AbortController();
 
     const delayDebounceFn = setTimeout(async () => {
-      if (searchTerm.trim().length >= 2 && !profData) {
+      // THE UI FIX: Only show suggestions if we are NOT currently viewing a result card or list
+      if (searchTerm.trim().length >= 2 && !profData && resultsList.length === 0) {
         setIsSearchingSuggestions(true);
         try {
-          // SWAPPED BACK TO RENDER URL
+          // SMART FRONTEND: Extract just the last word to avoid RMP's two-word bug
+          const nameParts = searchTerm.trim().split(/\s+/);
+          const queryWord = nameParts[nameParts.length - 1]; 
+
           const response = await fetch(
-            `https://comp-4710.onrender.com/api/rmp?name=${encodeURIComponent(searchTerm.trim())}`, 
+            `https://comp-4710.onrender.com/api/rmp?name=${encodeURIComponent(queryWord)}`, 
             { signal: abortController.signal } 
           );
           
           if (response.ok) {
             const data = await response.json();
             if (Array.isArray(data)) {
-              setSuggestions(data.slice(0, 5));
+              // STRICT FRONTEND FILTER: Ensure the results match EVERYTHING the user typed
+              const searchTermsLower = nameParts.map(t => t.toLowerCase());
+              const exactMatches = data.filter(prof => {
+                  const fName = prof.firstName || "";
+                  const lName = prof.lastName || "";
+                  const fullName = `${fName} ${lName}`.toLowerCase();
+                  return searchTermsLower.every(t => fullName.includes(t));
+              });
+              setSuggestions(exactMatches.slice(0, 5));
             }
           }
         } catch (err) {
@@ -44,11 +56,11 @@ function RateMyProfessor({ goBack }) {
       clearTimeout(delayDebounceFn);
       abortController.abort(); 
     };
-  }, [searchTerm, profData]);
+  }, [searchTerm, profData, resultsList.length]);
 
   // --- MAIN SEARCH ---
   const handleSearch = async (selectedProf = null) => {
-    setSuggestions([]);
+    setSuggestions([]); // THE UI FIX: Instantly self-destruct the dropdown
     setError("");
 
     // SCENARIO A: They clicked a dropdown suggestion
@@ -67,16 +79,31 @@ function RateMyProfessor({ goBack }) {
     setResultsList([]);
 
     try {
-      // SWAPPED BACK TO RENDER URL
-      const response = await fetch(`https://comp-4710.onrender.com/api/rmp?name=${encodeURIComponent(searchTerm.trim())}`);
+      // SMART FRONTEND FIX: Use the last word to cast the net
+      const nameParts = searchTerm.trim().split(/\s+/);
+      const queryWord = nameParts[nameParts.length - 1]; 
+
+      const response = await fetch(`https://comp-4710.onrender.com/api/rmp?name=${encodeURIComponent(queryWord)}`);
       if (!response.ok) throw new Error("Server error");
       const data = await response.json();
 
       if (Array.isArray(data) && data.length > 0) {
-        if (data.length === 1) {
-          setProfData(data[0]);
+        // STRICT FILTER
+        const searchTermsLower = nameParts.map(t => t.toLowerCase());
+        const exactMatches = data.filter(prof => {
+            const fName = prof.firstName || "";
+            const lName = prof.lastName || "";
+            const fullName = `${fName} ${lName}`.toLowerCase();
+            return searchTermsLower.every(t => fullName.includes(t));
+        });
+
+        if (exactMatches.length === 1) {
+          setProfData(exactMatches[0]);
+        } else if (exactMatches.length > 1) {
+          setResultsList(exactMatches);
         } else {
-          setResultsList(data);
+          // EXPLANATION FIX: Tell the user why new professors are missing
+          setError(`No Auburn professors found matching "${searchTerm}". (Note: New professors without student reviews on RMP will not appear).`);
         }
       } else {
         setError(`No Auburn professors found matching "${searchTerm}".`);
@@ -104,12 +131,13 @@ function RateMyProfessor({ goBack }) {
         <div style={{ flex: 1, position: 'relative' }}>
           <input
             type="text"
-            placeholder="e.g., John Doe"
+            placeholder="e.g., Gerry Dozier"
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
               setProfData(null); 
               setResultsList([]);
+              setSuggestions([]); // Ensures dropdown clears if they start backspacing
             }}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             style={{ width: '100%', boxSizing: 'border-box', padding: '15px', borderRadius: '4px', border: '1px solid #ccc', fontSize: '1rem' }}
@@ -121,8 +149,8 @@ function RateMyProfessor({ goBack }) {
             </div>
           )}
 
-          {/* DROPDOWN */}
-          {suggestions.length > 0 && (
+          {/* THE UI FIX: Ensure dropdown only renders if we have suggestions AND no results are showing */}
+          {suggestions.length > 0 && !profData && resultsList.length === 0 && (
             <div style={{ 
               position: 'absolute', top: '100%', left: 0, right: 0, 
               backgroundColor: 'white', border: '1px solid #03244D', borderTop: 'none',
