@@ -131,7 +131,7 @@ function RateMyProfessor({ goBack }) {
         <div style={{ flex: 1, position: 'relative' }}>
           <input
             type="text"
-            placeholder="e.g., Gerry Dozier"
+            placeholder="e.g., John Doe"
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
