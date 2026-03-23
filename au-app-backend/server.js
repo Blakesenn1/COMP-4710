@@ -12,7 +12,10 @@ app.get('/api/rmp', async (req, res) => {
     return res.status(400).json({ error: "Please provide a professor name." });
   }
 
-  console.log(`[SCRAPER] Searching globally for: "${professorName}"...`);
+  // THE FIX: Seamlessly append "Auburn" to force the database to prioritize our professors
+  const searchQuery = `${professorName} Auburn`;
+
+  console.log(`[SCRAPER] Searching globally for: "${searchQuery}"...`);
 
   try {
     const response = await fetch('https://www.ratemyprofessors.com/graphql', {
@@ -25,7 +28,7 @@ app.get('/api/rmp', async (req, res) => {
         query: `
           query ($text: String!) {
             newSearch {
-              teachers(query: {text: $text}, first: 100) {
+              teachers(query: {text: $text}, first: 50) {
                 edges {
                   node {
                     firstName
@@ -44,7 +47,7 @@ app.get('/api/rmp', async (req, res) => {
           }
         `,
         variables: {
-          text: professorName
+          text: searchQuery // Sending the targeted query
         }
       })
     });
@@ -58,13 +61,12 @@ app.get('/api/rmp', async (req, res) => {
 
     const teachers = data.data?.newSearch?.teachers?.edges?.map(edge => edge.node) || [];
     
-    // The Safe Filter: Checks if the school name contains "Auburn"
-    // This safely catches "Auburn University" or "Auburn University Montgomery"
+    // Safety check to ensure we only send Auburn staff to the frontend
     const auburnTeachers = teachers.filter(teacher => 
       teacher.school && teacher.school.name.includes('Auburn')
     );
     
-    console.log(`[SCRAPER] Found ${auburnTeachers.length} Auburn matches out of ${teachers.length} global results.`);
+    console.log(`[SCRAPER] Found ${auburnTeachers.length} Auburn matches for "${searchQuery}".`);
     res.json(auburnTeachers);
 
   } catch (error) {
@@ -73,7 +75,7 @@ app.get('/api/rmp', async (req, res) => {
   }
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Auburn App Backend running on http://localhost:${PORT}`);
+  console.log(`Auburn App Backend running on port ${PORT}`);
 });
