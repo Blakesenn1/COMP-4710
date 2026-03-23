@@ -12,10 +12,7 @@ app.get('/api/rmp', async (req, res) => {
     return res.status(400).json({ error: "Please provide a professor name." });
   }
 
-  // THE FIX: Seamlessly append "Auburn" to force the database to prioritize our professors
-  const searchQuery = `${professorName} Auburn`;
-
-  console.log(`[SCRAPER] Searching globally for: "${searchQuery}"...`);
+  console.log(`[SCRAPER] Searching specifically inside Auburn (School 44) for: "${professorName}"...`);
 
   try {
     const response = await fetch('https://www.ratemyprofessors.com/graphql', {
@@ -28,7 +25,7 @@ app.get('/api/rmp', async (req, res) => {
         query: `
           query ($text: String!) {
             newSearch {
-              teachers(query: {text: $text}, first: 50) {
+              teachers(query: {text: $text, schoolID: "U2Nob29sLTQ0"}, first: 100) {
                 edges {
                   node {
                     firstName
@@ -47,7 +44,8 @@ app.get('/api/rmp', async (req, res) => {
           }
         `,
         variables: {
-          text: searchQuery // Sending the targeted query
+          // Send exactly what the user typed, no "Auburn" keyword hacks!
+          text: professorName.trim() 
         }
       })
     });
@@ -59,15 +57,13 @@ app.get('/api/rmp', async (req, res) => {
         return res.status(500).json({ error: "RMP rejected the query." });
     }
 
+    // Safely extract the array of teachers straight from the database
     const teachers = data.data?.newSearch?.teachers?.edges?.map(edge => edge.node) || [];
     
-    // Safety check to ensure we only send Auburn staff to the frontend
-    const auburnTeachers = teachers.filter(teacher => 
-      teacher.school && teacher.school.name.includes('Auburn')
-    );
+    console.log(`[SCRAPER] Found ${teachers.length} matches inside Auburn University.`);
     
-    console.log(`[SCRAPER] Found ${auburnTeachers.length} Auburn matches for "${searchQuery}".`);
-    res.json(auburnTeachers);
+    // Send them directly to the app! No strict .filter() that might accidentally drop Hugh Kwon.
+    res.json(teachers);
 
   } catch (error) {
     console.error("[SCRAPER] Error:", error);
