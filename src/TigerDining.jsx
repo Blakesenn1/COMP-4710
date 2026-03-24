@@ -1,21 +1,89 @@
 import React, { useState, useEffect } from 'react';
 
-// Hardcoded Auburn Dining Locations
-const diningSpots = [
-  { id: 'edge', name: 'The Edge at Central Dining', type: 'Dining Hall', status: 'Open Now' },
-  { id: 'foy', name: 'Foy on the Fly', type: 'Dining Hall', status: 'Open Now' },
-  { id: 'cfa', name: 'Chick-fil-A (Student Center)', type: 'Fast Food', status: 'Open Now' },
-  { id: 'starbucks', name: 'Starbucks (RBD Library)', type: 'Coffee', status: 'Closed' },
-  { id: 'heyday', name: 'Hey Day Market', type: 'Food Hall', status: 'Open Now' }
+// The new nested data structure!
+const campusLocations = [
+  {
+    id: 'melton',
+    name: 'Melton Student Center',
+    restaurants: [
+      { id: 'cfa-melton', name: 'Chick-fil-A', type: 'Fast Food', status: 'Open Now' },
+      { id: 'sbux-melton', name: 'Starbucks', type: 'Coffee', status: 'Open Now' },
+      { id: 'saladworks', name: 'Saladworks', type: 'Healthy', status: 'Closed' }
+    ]
+  },
+  {
+    id: 'foy',
+    name: 'Foy Union',
+    restaurants: [
+      { id: 'panda-foy', name: 'Panda Express', type: 'Asian', status: 'Open Now' },
+      { id: 'csc-foy', name: 'Chicken Salad Chick', type: 'Sandwiches', status: 'Open Now' }
+    ]
+  },
+  {
+    id: 'village',
+    name: 'Village Dining',
+    restaurants: [
+      { id: 'tiger-zone', name: 'Tiger Zone (Dining Hall)', type: 'Buffet', status: 'Open Now' },
+      { id: 'panera-village', name: 'Panera Bread', type: 'Cafe', status: 'Open Now' }
+    ]
+  },
+  {
+    id: 'haley',
+    name: 'Haley Center',
+    restaurants: [
+      { id: 'caribou-haley', name: 'Caribou Coffee', type: 'Coffee', status: 'Open Now' }
+    ]
+  },
+  {
+    id: 'brown-kopel',
+    name: 'Brown-Kopel Hall',
+    restaurants: [
+      { id: 'eng-cafe', name: 'Engineering Cafe', type: 'Snacks/Coffee', status: 'Closed' }
+    ]
+  },
+  {
+    id: 'lowder',
+    name: 'Lowder Hall',
+    restaurants: [
+      { id: 'sbux-lowder', name: 'Starbucks', type: 'Coffee', status: 'Open Now' }
+    ]
+  },
+  {
+    id: 'harbert',
+    name: 'Harbert School of Business',
+    restaurants: [
+      { id: 'exchange-cafe', name: 'The Exchange Cafe', type: 'Cafe', status: 'Open Now' }
+    ]
+  },
+  {
+    id: 'heyday',
+    name: 'Hey Day Market',
+    restaurants: [
+      { id: 'pokemen', name: 'Pokemen', type: 'Sushi/Poke', status: 'Open Now' },
+      { id: 'wildfire', name: 'Wildfire Pizza', type: 'Pizza', status: 'Open Now' },
+      { id: 'khoodles', name: 'Khoodles', type: 'Noodles', status: 'Closed' }
+    ]
+  },
+  {
+    id: 'food-trucks',
+    name: 'Food Trucks (Various)',
+    restaurants: [
+      { id: 'amsterdam-truck', name: 'Amsterdam Tacos', type: 'Tex-Mex', status: 'Open Now' },
+      { id: 'hibachi-truck', name: 'Hibachi Truck', type: 'Asian', status: 'Open Now' }
+    ]
+  }
 ];
 
 function TigerDining({ goBack }) {
+  // We now track TWO levels of depth
+  const [selectedBuilding, setSelectedBuilding] = useState(null);
   const [selectedSpot, setSelectedSpot] = useState(null);
+  
+  // Review States
   const [reviews, setReviews] = useState([]);
   const [newReview, setNewReview] = useState('');
   const [rating, setRating] = useState('5');
 
-  // Load saved reviews on startup
   useEffect(() => {
     const savedReviews = localStorage.getItem('auburnDiningReviews');
     if (savedReviews) {
@@ -23,7 +91,6 @@ function TigerDining({ goBack }) {
     }
   }, []);
 
-  // Save to local storage whenever reviews array changes
   useEffect(() => {
     localStorage.setItem('auburnDiningReviews', JSON.stringify(reviews));
   }, [reviews]);
@@ -45,19 +112,24 @@ function TigerDining({ goBack }) {
     setRating('5');
   };
 
-  // --- DETAIL VIEW (When a restaurant is clicked) ---
-  if (selectedSpot) {
+  // ==========================================
+  // VIEW 3: RESTAURANT & REVIEWS
+  // ==========================================
+  if (selectedSpot && selectedBuilding) {
     const spotReviews = reviews.filter(r => r.spotId === selectedSpot.id);
     const avgRating = spotReviews.length > 0 
       ? (spotReviews.reduce((sum, r) => sum + r.rating, 0) / spotReviews.length).toFixed(1)
-      : 'No ratings yet';
+      : 'New';
 
     return (
       <div className="feature-container" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
-        <button className="back-button" onClick={() => setSelectedSpot(null)} style={{ marginBottom: '20px' }}>&larr; Back to Radar</button>
+        <button className="back-button" onClick={() => setSelectedSpot(null)} style={{ marginBottom: '20px' }}>
+          &larr; Back to {selectedBuilding.name}
+        </button>
         
         <div style={{ backgroundColor: '#03244D', color: 'white', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
           <h2 style={{ margin: '0 0 5px 0' }}>{selectedSpot.name}</h2>
+          <div style={{ color: '#cbd5e1', fontSize: '0.9rem', marginBottom: '15px' }}>📍 Inside {selectedBuilding.name}</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ backgroundColor: selectedSpot.status === 'Open Now' ? '#16a34a' : '#ef4444', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 'bold' }}>
               {selectedSpot.status}
@@ -109,48 +181,83 @@ function TigerDining({ goBack }) {
     );
   }
 
-  // --- MAIN LIST VIEW ---
+  // ==========================================
+  // VIEW 2: RESTAURANTS INSIDE A BUILDING
+  // ==========================================
+  if (selectedBuilding && !selectedSpot) {
+    return (
+      <div className="feature-container" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
+        <button className="back-button" onClick={() => setSelectedBuilding(null)} style={{ marginBottom: '20px' }}>
+          &larr; Back to Campus Map
+        </button>
+        
+        <h2 style={{color: '#03244D', marginTop: 0, marginBottom: '5px'}}>{selectedBuilding.name}</h2>
+        <p style={{ color: '#64748b', marginTop: 0, marginBottom: '25px', fontSize: '0.95rem' }}>
+          Select a dining option below to view details and reviews.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {selectedBuilding.restaurants.map(spot => {
+            const spotReviews = reviews.filter(r => r.spotId === spot.id);
+            const avgRating = spotReviews.length > 0 
+              ? (spotReviews.reduce((sum, r) => sum + r.rating, 0) / spotReviews.length).toFixed(1)
+              : 'New';
+
+            return (
+              <div 
+                key={spot.id} 
+                onClick={() => setSelectedSpot(spot)}
+                style={{ backgroundColor: 'white', border: '1px solid #e2e8f0', padding: '15px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+              >
+                <div>
+                  <h3 style={{ margin: '0 0 5px 0', color: '#03244D', fontSize: '1.1rem' }}>{spot.name}</h3>
+                  <div style={{ display: 'flex', gap: '10px', fontSize: '0.85rem' }}>
+                    <span style={{ color: '#64748b' }}>{spot.type}</span>
+                    <span style={{ color: '#DD550C', fontWeight: 'bold' }}>⭐ {avgRating}</span>
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: spot.status === 'Open Now' ? '#16a34a' : '#ef4444' }}></div>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: spot.status === 'Open Now' ? '#16a34a' : '#ef4444' }}>
+                    {spot.status}
+                  </span>
+                  <span style={{ color: '#cbd5e1', marginLeft: '5px' }}>▶</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // VIEW 1: MAIN BUILDING LIST
+  // ==========================================
   return (
     <div className="feature-container" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
       <button className="back-button" onClick={goBack} style={{ marginBottom: '20px' }}>&larr; Back to Hub</button>
       
       <h2 style={{color: '#03244D', marginTop: 0, marginBottom: '5px'}}>Tiger Dining Radar</h2>
       <p style={{ color: '#64748b', marginTop: 0, marginBottom: '25px', fontSize: '0.95rem' }}>
-        Check what's open on campus and see what other Auburn students are saying.
+        Select a campus location to see what is open inside.
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {diningSpots.map(spot => {
-          // Calculate quick average for the main list
-          const spotReviews = reviews.filter(r => r.spotId === spot.id);
-          const avgRating = spotReviews.length > 0 
-            ? (spotReviews.reduce((sum, r) => sum + r.rating, 0) / spotReviews.length).toFixed(1)
-            : 'New';
-
-          return (
-            <div 
-              key={spot.id} 
-              onClick={() => setSelectedSpot(spot)}
-              style={{ backgroundColor: 'white', border: '1px solid #e2e8f0', padding: '15px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
-            >
-              <div>
-                <h3 style={{ margin: '0 0 5px 0', color: '#03244D', fontSize: '1.1rem' }}>{spot.name}</h3>
-                <div style={{ display: 'flex', gap: '10px', fontSize: '0.85rem' }}>
-                  <span style={{ color: '#64748b' }}>{spot.type}</span>
-                  <span style={{ color: '#DD550C', fontWeight: 'bold' }}>⭐ {avgRating}</span>
-                </div>
-              </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: spot.status === 'Open Now' ? '#16a34a' : '#ef4444' }}></div>
-                <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: spot.status === 'Open Now' ? '#16a34a' : '#ef4444' }}>
-                  {spot.status}
-                </span>
-                <span style={{ color: '#cbd5e1', marginLeft: '5px' }}>▶</span>
-              </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '15px' }}>
+        {campusLocations.map(building => (
+          <div 
+            key={building.id} 
+            onClick={() => setSelectedBuilding(building)}
+            style={{ backgroundColor: 'white', border: '1px solid #e2e8f0', padding: '20px', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          >
+            <div>
+              <h3 style={{ margin: '0 0 5px 0', color: '#03244D', fontSize: '1.1rem' }}>{building.name}</h3>
+              <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{building.restaurants.length} Options</span>
             </div>
-          );
-        })}
+            <span style={{ color: '#DD550C', fontSize: '1.2rem' }}>▶</span>
+          </div>
+        ))}
       </div>
     </div>
   );
