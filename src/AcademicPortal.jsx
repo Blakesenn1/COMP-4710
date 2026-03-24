@@ -5,19 +5,14 @@ function AcademicPortal({ goBack }) {
   const [tokenInput, setTokenInput] = useState('');
   const [isLinked, setIsLinked] = useState(false);
   const [liveClasses, setLiveClasses] = useState([]);
+  const [userName, setUserName] = useState(''); // NEW: Stores the user's name
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState('');
 
   // Class Detail States
   const [selectedClass, setSelectedClass] = useState(null);
   
-  // Grade Rescue States
-  const [targetGrade, setTargetGrade] = useState('');
-  const [finalWeight, setFinalWeight] = useState('');
-  const [calcResult, setCalcResult] = useState(null);
-  const [calcError, setCalcError] = useState('');
-
-  // Triage Board States
+  // Upcoming Assignments States
   const [assignments, setAssignments] = useState([]);
   const [isLoadingAssignments, setIsLoadingAssignments] = useState(false);
 
@@ -30,24 +25,25 @@ function AcademicPortal({ goBack }) {
     }
   }, []);
 
-  // 2. FETCH LIVE DATA
+  // 2. FETCH LIVE DATA (Classes + User Profile)
   const fetchLiveGrades = async (tokenToUse) => {
     setIsLoading(true);
     setFetchError('');
 
     try {
-      const response = await fetch('https://comp-4710.onrender.com/api/canvas/courses', {
+      // Fetch Classes
+      const courseResponse = await fetch('https://comp-4710.onrender.com/api/canvas/courses', {
         headers: { 'Authorization': `Bearer ${tokenToUse}` }
       });
 
-      if (!response.ok) throw new Error("Invalid token or Canvas is down.");
-      const rawCourses = await response.json();
+      if (!courseResponse.ok) throw new Error("Invalid token or Canvas is down.");
+      const rawCourses = await courseResponse.json();
 
       const formattedClasses = rawCourses.map(course => {
         const enrollment = course.enrollments[0];
         return {
           id: course.course_code.split(' ')[0] || "CLASS", 
-          canvasId: course.id, // We need this internal ID to fetch the specific assignments!
+          canvasId: course.id, 
           name: course.name || "Unnamed Course",
           letter: enrollment.computed_current_grade || '--', 
           currentPercent: enrollment.computed_current_score || 100 
@@ -55,6 +51,22 @@ function AcademicPortal({ goBack }) {
       });
 
       setLiveClasses(formattedClasses);
+
+      // Fetch User Name
+      try {
+        const userResponse = await fetch('https://comp-4710.onrender.com/api/canvas/user', {
+          headers: { 'Authorization': `Bearer ${tokenToUse}` }
+        });
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          // Split the name to just grab the first name (e.g. "Blake" from "Blake Senn")
+          const firstName = userData.name.split(' ')[0];
+          setUserName(firstName);
+        }
+      } catch (userErr) {
+        console.error("Could not fetch user name, skipping.");
+      }
+
       setIsLinked(true);
       localStorage.setItem('auburnCanvasToken', tokenToUse); 
 
@@ -80,7 +92,6 @@ function AcademicPortal({ goBack }) {
           
           if (response.ok) {
             const data = await response.json();
-            // Filter out assignments with no due date, limit to top 4 for the UI
             const upcoming = data.filter(a => a.due_at).slice(0, 4);
             setAssignments(upcoming);
           }
@@ -106,41 +117,24 @@ function AcademicPortal({ goBack }) {
     localStorage.removeItem('auburnCanvasToken');
     setIsLinked(false);
     setLiveClasses([]);
+    setUserName('');
     setSelectedClass(null);
-  };
-
-  // Grade Rescue Math
-  const calculateRequiredScore = () => {
-    setCalcError('');
-    setCalcResult(null);
-    const target = parseFloat(targetGrade);
-    const weightPercent = parseFloat(finalWeight);
-
-    if (isNaN(target) || isNaN(weightPercent) || weightPercent <= 0 || weightPercent >= 100) {
-      setCalcError('Please enter valid numbers.');
-      return;
-    }
-
-    const current = selectedClass.currentPercent;
-    const weight = weightPercent / 100;
-    const requiredScore = (target - (current * (1 - weight))) / weight;
-    setCalcResult(requiredScore.toFixed(1));
   };
 
   // THE COLOR LOGIC ENGINE
   const getUrgencyColors = (dueDateString) => {
     const now = new Date();
     const due = new Date(dueDateString);
-    const diffHours = (due - now) / (1000 * 60 * 60); // Calculate difference in hours
+    const diffHours = (due - now) / (1000 * 60 * 60);
 
     if (diffHours <= 24) {
-      return { bg: '#fef2f2', border: '#f87171', text: '#dc2626', label: 'URGENT' }; // Red
+      return { bg: '#fef2f2', border: '#f87171', text: '#dc2626', label: 'URGENT' }; 
     } else if (diffHours <= 48) {
-      return { bg: '#fff7ed', border: '#fb923c', text: '#ea580c', label: 'SOON' }; // Orange
+      return { bg: '#fff7ed', border: '#fb923c', text: '#ea580c', label: 'SOON' }; 
     } else if (diffHours <= 72) {
-      return { bg: '#fefce8', border: '#facc15', text: '#ca8a04', label: 'UPCOMING' }; // Yellow
+      return { bg: '#fefce8', border: '#facc15', text: '#ca8a04', label: 'UPCOMING' }; 
     } else {
-      return { bg: '#f0fdf4', border: '#4ade80', text: '#16a34a', label: 'ON TRACK' }; // Green
+      return { bg: '#f0fdf4', border: '#4ade80', text: '#16a34a', label: 'ON TRACK' }; 
     }
   };
 
@@ -156,7 +150,7 @@ function AcademicPortal({ goBack }) {
         <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
           <h3 style={{ marginTop: 0, color: '#03244D' }}>Connect Your Canvas</h3>
           <p style={{ color: '#475569', fontSize: '0.95rem', lineHeight: '1.5' }}>
-            To view live grades and use the Grade Rescue Engine, generate a secure Access Token from Auburn Canvas.
+            To view live grades and upcoming assignments, generate a secure Access Token from Auburn Canvas.
           </p>
           
           <ol style={{ color: '#475569', fontSize: '0.9rem', marginBottom: '25px', paddingLeft: '20px' }}>
@@ -185,12 +179,12 @@ function AcademicPortal({ goBack }) {
   }
 
   // ==========================================
-  // VIEW 2: CLASS COMMAND CENTER
+  // VIEW 2: COURSE DETAILS & ASSIGNMENTS
   // ==========================================
   if (selectedClass) {
     return (
       <div className="feature-container" style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <button className="back-button" onClick={() => { setSelectedClass(null); setCalcResult(null); setTargetGrade(''); setFinalWeight(''); setAssignments([]); }} style={{ marginBottom: '20px' }}>
+        <button className="back-button" onClick={() => { setSelectedClass(null); setAssignments([]); }} style={{ marginBottom: '20px' }}>
           &larr; Back to Dashboard
         </button>
         
@@ -206,8 +200,8 @@ function AcademicPortal({ goBack }) {
           <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#DD550C' }}>{selectedClass.letter}</div>
         </div>
 
-        {/* ================== TRIAGE BOARD ================== */}
-        <h3 style={{color: '#03244D', textAlign: 'left', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px', marginBottom: '15px'}}>Triage Board</h3>
+        {/* ================== UPCOMING ASSIGNMENTS ================== */}
+        <h3 style={{color: '#03244D', textAlign: 'left', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px', marginBottom: '15px'}}>Upcoming Assignments</h3>
         
         {isLoadingAssignments ? (
           <p style={{ color: '#64748b', textAlign: 'left' }}>Scanning Canvas for upcoming assignments...</p>
@@ -237,45 +231,6 @@ function AcademicPortal({ goBack }) {
             })}
           </div>
         )}
-
-        {/* ================== GRADE RESCUE ================== */}
-        <h3 style={{color: '#03244D', textAlign: 'left', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px', marginBottom: '15px'}}>Grade Rescue Engine</h3>
-        
-        <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
-          <div style={{ flex: 1, textAlign: 'left' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '8px' }}>Target Grade (%)</label>
-            <input 
-              type="number" placeholder="e.g. 90" value={targetGrade} onChange={(e) => setTargetGrade(e.target.value)}
-              style={{ width: '100%', boxSizing: 'border-box', padding: '12px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
-          </div>
-          <div style={{ flex: 1, textAlign: 'left' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '8px' }}>Final Exam Weight (%)</label>
-            <input 
-              type="number" placeholder="e.g. 20" value={finalWeight} onChange={(e) => setFinalWeight(e.target.value)}
-              style={{ width: '100%', boxSizing: 'border-box', padding: '12px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
-          </div>
-        </div>
-
-        <button 
-          onClick={calculateRequiredScore}
-          style={{ width: '100%', padding: '15px', backgroundColor: '#DD550C', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', marginBottom: '20px' }}
-        >
-          Calculate Required Score
-        </button>
-
-        {calcError && <p style={{ color: '#dc2626', fontWeight: 'bold' }}>{calcError}</p>}
-
-        {calcResult !== null && (
-          <div style={{ padding: '20px', borderRadius: '8px', border: '2px solid', borderColor: calcResult > 100 ? '#f87171' : calcResult < 0 ? '#4ade80' : '#03244D', backgroundColor: calcResult > 100 ? '#fef2f2' : calcResult < 0 ? '#f0fdf4' : 'white', textAlign: 'center' }}>
-            <p style={{ margin: '0 0 10px 0', color: '#475569', fontWeight: 'bold' }}>You need to score at least:</p>
-            <h2 style={{ margin: 0, fontSize: '3rem', color: calcResult > 100 ? '#dc2626' : '#03244D' }}>{calcResult}%</h2>
-            <p style={{ margin: '10px 0 0 0', color: '#64748b', fontSize: '0.9rem' }}>
-              {calcResult > 100 ? "Uh oh. You might need extra credit." : calcResult < 0 ? "You could get a 0 and still hit your target!" : "Totally doable. Time to study!"}
-            </p>
-          </div>
-        )}
       </div>
     );
   }
@@ -290,10 +245,11 @@ function AcademicPortal({ goBack }) {
         <button onClick={disconnectCanvas} style={{ background: 'none', border: 'none', color: '#64748b', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.85rem' }}>Disconnect Canvas</button>
       </div>
       
-      <h2 style={{color: '#03244D', width: '100%', textAlign: 'left', marginTop: '0', marginBottom: '25px'}}>Live Academic Portal</h2>
+      <h2 style={{color: '#03244D', width: '100%', textAlign: 'left', marginTop: '0', marginBottom: '25px'}}>Academic Portal</h2>
 
+      {/* DYNAMIC HEADER BASED ON USER NAME */}
       <p style={{ color: '#64748b', width: '100%', textAlign: 'left', fontWeight: 'bold', marginBottom: '10px' }}>
-        Live Classes (Tap to open Command Center)
+        {userName ? `${userName}'s Classes` : 'Live Classes'} (Tap to view details)
       </p>
 
       {isLoading ? (
