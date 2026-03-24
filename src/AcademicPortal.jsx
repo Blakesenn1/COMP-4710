@@ -8,12 +8,18 @@ function AcademicPortal({ goBack }) {
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState('');
 
-  // Grade Rescue States
+  // Class Detail States
   const [selectedClass, setSelectedClass] = useState(null);
+  
+  // Grade Rescue States
   const [targetGrade, setTargetGrade] = useState('');
   const [finalWeight, setFinalWeight] = useState('');
   const [calcResult, setCalcResult] = useState(null);
   const [calcError, setCalcError] = useState('');
+
+  // Triage Board States
+  const [assignments, setAssignments] = useState([]);
+  const [isLoadingAssignments, setIsLoadingAssignments] = useState(false);
 
   // 1. CHECK LOCAL STORAGE ON LOAD
   useEffect(() => {
@@ -24,7 +30,7 @@ function AcademicPortal({ goBack }) {
     }
   }, []);
 
-  // 2. FETCH LIVE DATA FROM RENDER BACKEND
+  // 2. FETCH LIVE DATA
   const fetchLiveGrades = async (tokenToUse) => {
     setIsLoading(true);
     setFetchError('');
@@ -34,19 +40,15 @@ function AcademicPortal({ goBack }) {
         headers: { 'Authorization': `Bearer ${tokenToUse}` }
       });
 
-      if (!response.ok) {
-        throw new Error("Invalid token or Canvas is down.");
-      }
-
+      if (!response.ok) throw new Error("Invalid token or Canvas is down.");
       const rawCourses = await response.json();
 
-      // Format the raw Canvas data into our clean UI format
       const formattedClasses = rawCourses.map(course => {
         const enrollment = course.enrollments[0];
         return {
-          id: course.course_code.split(' ')[0] || "CLASS", // Gets "COMP4710" from full string
+          id: course.course_code.split(' ')[0] || "CLASS", 
+          canvasId: course.id, // We need this internal ID to fetch the specific assignments!
           name: course.name || "Unnamed Course",
-          // Sometimes professors hide letters, fallback to percentage or "N/A"
           letter: enrollment.computed_current_grade || '--', 
           currentPercent: enrollment.computed_current_score || 100 
         };
@@ -54,17 +56,43 @@ function AcademicPortal({ goBack }) {
 
       setLiveClasses(formattedClasses);
       setIsLinked(true);
-      // Save valid token to the phone so they don't have to log in again!
       localStorage.setItem('auburnCanvasToken', tokenToUse); 
 
     } catch (err) {
       setFetchError("Could not connect. Ensure your token is correct and Render is awake.");
-      localStorage.removeItem('auburnCanvasToken'); // Wipe bad token
+      localStorage.removeItem('auburnCanvasToken');
       setIsLinked(false);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // 3. FETCH ASSIGNMENTS WHEN A CLASS IS CLICKED
+  useEffect(() => {
+    if (selectedClass && selectedClass.canvasId) {
+      const fetchAssignments = async () => {
+        setIsLoadingAssignments(true);
+        try {
+          const token = localStorage.getItem('auburnCanvasToken');
+          const response = await fetch(`https://comp-4710.onrender.com/api/canvas/courses/${selectedClass.canvasId}/assignments`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            // Filter out assignments with no due date, limit to top 4 for the UI
+            const upcoming = data.filter(a => a.due_at).slice(0, 4);
+            setAssignments(upcoming);
+          }
+        } catch (error) {
+          console.error("Failed to fetch assignments");
+        } finally {
+          setIsLoadingAssignments(false);
+        }
+      };
+      fetchAssignments();
+    }
+  }, [selectedClass]);
 
   const handleConnect = () => {
     if (tokenInput.trim().length < 10) {
@@ -85,7 +113,6 @@ function AcademicPortal({ goBack }) {
   const calculateRequiredScore = () => {
     setCalcError('');
     setCalcResult(null);
-
     const target = parseFloat(targetGrade);
     const weightPercent = parseFloat(finalWeight);
 
@@ -97,12 +124,28 @@ function AcademicPortal({ goBack }) {
     const current = selectedClass.currentPercent;
     const weight = weightPercent / 100;
     const requiredScore = (target - (current * (1 - weight))) / weight;
-    
     setCalcResult(requiredScore.toFixed(1));
   };
 
+  // THE COLOR LOGIC ENGINE
+  const getUrgencyColors = (dueDateString) => {
+    const now = new Date();
+    const due = new Date(dueDateString);
+    const diffHours = (due - now) / (1000 * 60 * 60); // Calculate difference in hours
+
+    if (diffHours <= 24) {
+      return { bg: '#fef2f2', border: '#f87171', text: '#dc2626', label: 'URGENT' }; // Red
+    } else if (diffHours <= 48) {
+      return { bg: '#fff7ed', border: '#fb923c', text: '#ea580c', label: 'SOON' }; // Orange
+    } else if (diffHours <= 72) {
+      return { bg: '#fefce8', border: '#facc15', text: '#ca8a04', label: 'UPCOMING' }; // Yellow
+    } else {
+      return { bg: '#f0fdf4', border: '#4ade80', text: '#16a34a', label: 'ON TRACK' }; // Green
+    }
+  };
+
   // ==========================================
-  // VIEW 1: SETUP SCREEN (No Token Found)
+  // VIEW 1: SETUP SCREEN
   // ==========================================
   if (!isLinked) {
     return (
@@ -124,10 +167,7 @@ function AcademicPortal({ goBack }) {
           </ol>
 
           <input 
-            type="password" 
-            placeholder="Paste Token Here (e.g. 1162~abcd...)" 
-            value={tokenInput}
-            onChange={(e) => setTokenInput(e.target.value)}
+            type="password" placeholder="Paste Token Here" value={tokenInput} onChange={(e) => setTokenInput(e.target.value)}
             style={{ width: '100%', boxSizing: 'border-box', padding: '15px', borderRadius: '4px', border: '1px solid #ccc', marginBottom: '15px' }}
           />
 
@@ -145,19 +185,20 @@ function AcademicPortal({ goBack }) {
   }
 
   // ==========================================
-  // VIEW 2: GRADE RESCUE CALCULATOR
+  // VIEW 2: CLASS COMMAND CENTER
   // ==========================================
   if (selectedClass) {
     return (
       <div className="feature-container" style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <button className="back-button" onClick={() => { setSelectedClass(null); setCalcResult(null); setTargetGrade(''); setFinalWeight(''); }} style={{ marginBottom: '20px' }}>
+        <button className="back-button" onClick={() => { setSelectedClass(null); setCalcResult(null); setTargetGrade(''); setFinalWeight(''); setAssignments([]); }} style={{ marginBottom: '20px' }}>
           &larr; Back to Dashboard
         </button>
         
         <h2 style={{color: '#03244D', textAlign: 'left', marginTop: '0', marginBottom: '5px'}}>{selectedClass.id}</h2>
         <p style={{ color: '#64748b', textAlign: 'left', marginTop: '0', marginBottom: '30px' }}>{selectedClass.name}</p>
 
-        <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+        {/* Current Grade Card */}
+        <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
           <div>
             <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Current Grade</div>
             <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#03244D' }}>{selectedClass.currentPercent}%</div>
@@ -165,7 +206,40 @@ function AcademicPortal({ goBack }) {
           <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#DD550C' }}>{selectedClass.letter}</div>
         </div>
 
-        <h3 style={{color: '#03244D', textAlign: 'left', marginBottom: '15px'}}>Grade Rescue Engine</h3>
+        {/* ================== TRIAGE BOARD ================== */}
+        <h3 style={{color: '#03244D', textAlign: 'left', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px', marginBottom: '15px'}}>Triage Board</h3>
+        
+        {isLoadingAssignments ? (
+          <p style={{ color: '#64748b', textAlign: 'left' }}>Scanning Canvas for upcoming assignments...</p>
+        ) : assignments.length === 0 ? (
+          <div style={{ padding: '20px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', color: '#16a34a', textAlign: 'center', marginBottom: '40px' }}>
+            <strong>All clear!</strong> No upcoming assignments found.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '40px' }}>
+            {assignments.map((assignment) => {
+              const colors = getUrgencyColors(assignment.due_at);
+              const dueDateObj = new Date(assignment.due_at);
+              const formattedDate = dueDateObj.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+              const formattedTime = dueDateObj.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+              return (
+                <div key={assignment.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'white', border: `1px solid #e2e8f0`, borderLeft: `6px solid ${colors.border}`, padding: '15px', borderRadius: '8px', textAlign: 'left' }}>
+                  <div style={{ paddingRight: '15px' }}>
+                    <div style={{ fontWeight: 'bold', color: '#03244D', marginBottom: '4px', fontSize: '1rem' }}>{assignment.name}</div>
+                    <div style={{ color: '#64748b', fontSize: '0.85rem' }}>Due: {formattedDate} at {formattedTime}</div>
+                  </div>
+                  <div style={{ backgroundColor: colors.bg, color: colors.text, padding: '5px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                    {colors.label}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ================== GRADE RESCUE ================== */}
+        <h3 style={{color: '#03244D', textAlign: 'left', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px', marginBottom: '15px'}}>Grade Rescue Engine</h3>
         
         <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
           <div style={{ flex: 1, textAlign: 'left' }}>
@@ -219,7 +293,7 @@ function AcademicPortal({ goBack }) {
       <h2 style={{color: '#03244D', width: '100%', textAlign: 'left', marginTop: '0', marginBottom: '25px'}}>Live Academic Portal</h2>
 
       <p style={{ color: '#64748b', width: '100%', textAlign: 'left', fontWeight: 'bold', marginBottom: '10px' }}>
-        Live Classes (Tap to open Grade Rescue)
+        Live Classes (Tap to open Command Center)
       </p>
 
       {isLoading ? (
