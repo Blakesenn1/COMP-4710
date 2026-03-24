@@ -106,3 +106,28 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Auburn App Backend running on port ${PORT}`);
 });
+
+// ==========================================
+// 4. NEW: CANVAS: USER PROFILE ROUTE
+// ==========================================
+app.get('/api/canvas/user', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "No Canvas token provided." });
+
+  try {
+    const canvasUrl = 'https://auburn.instructure.com/api/v1/users/self';
+    const response = await fetch(canvasUrl, {
+      method: 'GET',
+      headers: { 'Authorization': authHeader, 'Accept': 'application/json' }
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch user.");
+    const user = await response.json();
+    
+    // Canvas usually provides 'short_name' (e.g., "Blake Senn" instead of "Senn, Adam Blake")
+    res.json({ name: user.short_name || user.name }); 
+  } catch (error) {
+    console.error("[CANVAS] User Error:", error);
+    res.status(500).json({ error: "Failed to fetch user profile." });
+  }
+});
