@@ -53,44 +53,52 @@ app.get('/api/rmp', async (req, res) => {
 });
 
 // ==========================================
-// 2. NEW: CANVAS API PROXY ROUTE
+// 2. CANVAS: LIVE COURSES ROUTE
 // ==========================================
 app.get('/api/canvas/courses', async (req, res) => {
-  // React will send the user's secret Canvas token in the headers
   const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
-    return res.status(401).json({ error: "No Canvas token provided." });
-  }
-
-  console.log(`[CANVAS] Fetching live grades...`);
+  if (!authHeader) return res.status(401).json({ error: "No Canvas token provided." });
 
   try {
-    // Auburn's Canvas API endpoint. "include[]=total_scores" is what grabs the grades!
     const canvasUrl = 'https://auburn.instructure.com/api/v1/courses?enrollment_state=active&include[]=total_scores';
-
     const response = await fetch(canvasUrl, {
       method: 'GET',
-      headers: {
-        'Authorization': authHeader, // Passes the "Bearer <token>" to Canvas
-        'Accept': 'application/json'
-      }
+      headers: { 'Authorization': authHeader, 'Accept': 'application/json' }
     });
 
     if (!response.ok) throw new Error("Canvas API rejected the token.");
-
     const data = await response.json();
-
-    // Filter out junk (like empty sandbox courses) so we only send real classes back
-    const activeCourses = data.filter(course => 
-      course.enrollments && course.enrollments.length > 0 && course.course_code
-    );
-
+    const activeCourses = data.filter(course => course.enrollments && course.enrollments.length > 0 && course.course_code);
     res.json(activeCourses);
-
   } catch (error) {
-    console.error("[CANVAS] Error:", error);
     res.status(500).json({ error: "Failed to connect to Canvas." });
+  }
+});
+
+// ==========================================
+// 3. NEW: CANVAS: UPCOMING ASSIGNMENTS ROUTE
+// ==========================================
+app.get('/api/canvas/courses/:courseId/assignments', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "No Canvas token provided." });
+
+  try {
+    const { courseId } = req.params;
+    // We specifically ask Canvas for "upcoming" assignments, sorted by due date
+    const canvasUrl = `https://auburn.instructure.com/api/v1/courses/${courseId}/assignments?bucket=upcoming&order_by=due_at`;
+    
+    const response = await fetch(canvasUrl, {
+      method: 'GET',
+      headers: { 'Authorization': authHeader, 'Accept': 'application/json' }
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch assignments.");
+    const assignments = await response.json();
+    
+    res.json(assignments);
+  } catch (error) {
+    console.error("[CANVAS] Assignments Error:", error);
+    res.status(500).json({ error: "Failed to fetch assignments." });
   }
 });
 
