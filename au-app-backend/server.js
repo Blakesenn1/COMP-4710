@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const cheerio = require('cheerio');
 
 const app = express();
 app.use(cors());
@@ -129,5 +130,51 @@ app.get('/api/canvas/user', async (req, res) => {
   } catch (error) {
     console.error("[CANVAS] User Error:", error);
     res.status(500).json({ error: "Failed to fetch user profile." });
+  }
+});
+// ==========================================
+// 5. NEW: CAREER RADAR URL SCRAPER
+// ==========================================
+app.post('/api/scrape-job', async (req, res) => {
+  const { url } = req.body;
+
+  if (!url) return res.status(400).json({ error: "No URL provided." });
+
+  try {
+    // Fetch the raw HTML of the job posting
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) throw new Error("Could not fetch the URL.");
+
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    // Grab the page title or OpenGraph title
+    let pageTitle = $('meta[property="og:title"]').attr('content') || $('title').text() || "Unknown Job";
+
+    // Smart Splitter: Most titles are "Job Title - Company" or "Company | Job Title"
+    let jobTitle = pageTitle;
+    let company = "Unknown Company";
+
+    if (pageTitle.includes('-')) {
+      const parts = pageTitle.split('-');
+      jobTitle = parts[0].trim();
+      company = parts[parts.length - 1].trim();
+    } else if (pageTitle.includes('|')) {
+      const parts = pageTitle.split('|');
+      jobTitle = parts[0].trim();
+      company = parts[parts.length - 1].trim();
+    }
+
+    res.json({ title: jobTitle, company: company, originalTitle: pageTitle });
+
+  } catch (error) {
+    console.error("[SCRAPER] Error:", error.message);
+    // If the site blocks us, we send a generic response so the app doesn't crash
+    res.json({ title: "Manual Entry Required", company: "Could not auto-scrape site" });
   }
 });
