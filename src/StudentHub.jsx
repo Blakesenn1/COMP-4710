@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import TigerCard from './TigerCard';
 import RateMyProfessor from './RateMyProfessor';
 import AcademicPortal from './AcademicPortal';
+import CareerStatus from './CareerStatus';
 
 const menuData = [
   {
@@ -11,7 +12,7 @@ const menuData = [
     features: [
       { id: 'RateMyProfessor', name: 'Rate My Professor' },
       { id: 'AcademicPortal', name: 'Academic Portal' },
-      { id: 'CareerHub', name: 'Career Hub' }
+      { id: 'CareerStatus', name: 'Career Status' }
     ]
   },
   {
@@ -75,7 +76,7 @@ function StudentHub({ goBack }) {
   };
 
   const handleFeatureClick = (featureId) => {
-    const implementedFeatures = ['RateMyProfessor', 'TigerCard', 'AcademicPortal'];
+    const implementedFeatures = ['RateMyProfessor', 'TigerCard', 'AcademicPortal', 'CareerStatus'];
     if (implementedFeatures.includes(featureId)) {
       setActiveFeature(featureId);
     } else {
@@ -86,6 +87,7 @@ function StudentHub({ goBack }) {
   if (activeFeature === 'TigerCard') return <TigerCard goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'RateMyProfessor') return <RateMyProfessor goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'AcademicPortal') return <AcademicPortal goBack={() => setActiveFeature(null)} />;
+  if (activeFeature === 'CareerStatus') return <CareerStatus goBack={() => setActiveFeature(null)} />;
 
   return (
     <div className="main-menu" style={{ width: '100%', maxWidth: '600px' }}>
