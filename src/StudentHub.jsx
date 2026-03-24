@@ -3,6 +3,7 @@ import TigerCard from './TigerCard';
 import RateMyProfessor from './RateMyProfessor';
 import AcademicPortal from './AcademicPortal';
 import CareerStatus from './CareerStatus';
+import TigerDining from './TigerDining';
 
 const menuData = [
   {
@@ -76,7 +77,7 @@ function StudentHub({ goBack }) {
   };
 
   const handleFeatureClick = (featureId) => {
-    const implementedFeatures = ['RateMyProfessor', 'TigerCard', 'AcademicPortal', 'CareerStatus'];
+    const implementedFeatures = ['RateMyProfessor', 'TigerCard', 'AcademicPortal', 'CareerStatus', 'TigerDining'];
     if (implementedFeatures.includes(featureId)) {
       setActiveFeature(featureId);
     } else {
@@ -88,6 +89,7 @@ function StudentHub({ goBack }) {
   if (activeFeature === 'RateMyProfessor') return <RateMyProfessor goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'AcademicPortal') return <AcademicPortal goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'CareerStatus') return <CareerStatus goBack={() => setActiveFeature(null)} />;
+  if (activeFeature === 'TigerDining') return <TigerDining goBack={() => setActiveFeature(null)} />;
 
   return (
     <div className="main-menu" style={{ width: '100%', maxWidth: '600px' }}>
