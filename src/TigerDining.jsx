@@ -292,7 +292,7 @@ function TigerDining({ goBack }) {
     <div className="feature-container" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
       <button className="back-button" onClick={goBack} style={{ marginBottom: '20px' }}>&larr; Back to Hub</button>
       
-      <h2 style={{color: '#03244D', marginTop: 0, marginBottom: '5px'}}>Tiger Dining Radar</h2>
+      <h2 style={{color: '#03244D', marginTop: 0, marginBottom: '5px'}}>AU Campus Dining</h2>
       <p style={{ color: '#64748b', marginTop: 0, marginBottom: '25px', fontSize: '0.95rem' }}>
         Select a campus location to see what is open inside.
       </p>

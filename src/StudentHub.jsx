@@ -4,6 +4,7 @@ import RateMyProfessor from './RateMyProfessor';
 import AcademicPortal from './AcademicPortal';
 import CareerStatus from './CareerStatus';
 import TigerDining from './TigerDining';
+import GreekLife from './GreekLife';
 
 const menuData = [
   {
@@ -22,7 +23,7 @@ const menuData = [
     icon: '🍕',
     features: [
       { id: 'TigerDining', name: 'AU Dining' },
-      { id: 'Involvement', name: 'The Involvement Explorer' },
+      { id: 'GreekLife', name: 'Greek Life' },
       { id: 'EventRadar', name: 'Campus Event Radar' }
     ]
   },
@@ -77,7 +78,7 @@ function StudentHub({ goBack }) {
   };
 
   const handleFeatureClick = (featureId) => {
-    const implementedFeatures = ['RateMyProfessor', 'TigerCard', 'AcademicPortal', 'CareerStatus', 'TigerDining'];
+    const implementedFeatures = ['RateMyProfessor', 'TigerCard', 'AcademicPortal', 'CareerStatus', 'TigerDining', 'GreekLife'];
     if (implementedFeatures.includes(featureId)) {
       setActiveFeature(featureId);
     } else {
@@ -90,6 +91,7 @@ function StudentHub({ goBack }) {
   if (activeFeature === 'AcademicPortal') return <AcademicPortal goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'CareerStatus') return <CareerStatus goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'TigerDining') return <TigerDining goBack={() => setActiveFeature(null)} />;
+  if (activeFeature === 'GreekLife') return <GreekLife goBack={() => setActiveFeature(null)} />;
 
   return (
     <div className="main-menu" style={{ width: '100%', maxWidth: '600px' }}>
