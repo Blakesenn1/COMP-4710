@@ -3,8 +3,10 @@ import TigerCard from './TigerCard';
 import RateMyProfessor from './RateMyProfessor';
 import AcademicPortal from './AcademicPortal';
 import CareerStatus from './CareerStatus';
+import AcademicCalendar from './AcademicCalendar';
 import TigerDining from './TigerDining';
 import GreekLife from './GreekLife';
+import CampusCalendar from './CampusCalendar';
 
 const menuData = [
   {
@@ -14,7 +16,8 @@ const menuData = [
     features: [
       { id: 'RateMyProfessor', name: 'Rate My Professor' },
       { id: 'AcademicPortal', name: 'Academic Portal' },
-      { id: 'CareerStatus', name: 'Career Status' }
+      { id: 'CareerStatus', name: 'Career Status' },
+      { id: 'AcademicCalendar', name: 'Academic Calendar' }
     ]
   },
   {
@@ -24,7 +27,7 @@ const menuData = [
     features: [
       { id: 'TigerDining', name: 'AU Dining' },
       { id: 'GreekLife', name: 'Greek Life' },
-      { id: 'EventRadar', name: 'Campus Event Radar' }
+      { id: 'CampusCalendar', name: 'Campus Calendar' }
     ]
   },
   {
@@ -78,7 +81,7 @@ function StudentHub({ goBack }) {
   };
 
   const handleFeatureClick = (featureId) => {
-    const implementedFeatures = ['RateMyProfessor', 'TigerCard', 'AcademicPortal', 'CareerStatus', 'TigerDining', 'GreekLife'];
+    const implementedFeatures = ['RateMyProfessor', 'TigerCard', 'AcademicPortal', 'CareerStatus', 'TigerDining', 'GreekLife', 'AcademicCalendar', 'CampusCalendar'];
     if (implementedFeatures.includes(featureId)) {
       setActiveFeature(featureId);
     } else {
@@ -92,6 +95,8 @@ function StudentHub({ goBack }) {
   if (activeFeature === 'CareerStatus') return <CareerStatus goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'TigerDining') return <TigerDining goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'GreekLife') return <GreekLife goBack={() => setActiveFeature(null)} />;
+  if (activeFeature === 'AcademicCalendar') return <AcademicCalendar goBack={() => setActiveFeature(null)} />;
+  if (activeFeature === 'CampusCalendar') return <CampusCalendar goBack={() => setActiveFeature(null)} />;
 
   return (
     <div className="main-menu" style={{ width: '100%', maxWidth: '600px' }}>
