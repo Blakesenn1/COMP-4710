@@ -21,7 +21,7 @@ const menuData = [
     title: 'Campus Life & Dining',
     icon: '🍕',
     features: [
-      { id: 'TigerDining', name: 'Tiger Dining' },
+      { id: 'TigerDining', name: 'AU Dining' },
       { id: 'Involvement', name: 'The Involvement Explorer' },
       { id: 'EventRadar', name: 'Campus Event Radar' }
     ]
