@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import TigerCard from './TigerCard';
+
+// --- ALL IMPLEMENTED FEATURE IMPORTS ---
 import RateMyProfessor from './RateMyProfessor';
 import AcademicPortal from './AcademicPortal';
 import CareerStatus from './CareerStatus';
@@ -7,6 +8,9 @@ import AcademicCalendar from './AcademicCalendar';
 import TigerDining from './TigerDining';
 import GreekLife from './GreekLife';
 import CampusCalendar from './CampusCalendar';
+import DiningDollars from './DiningDollars';
+import EBill from './EBill';
+import FinancialAid from './FinancialAid';
 
 const menuData = [
   {
@@ -35,9 +39,9 @@ const menuData = [
     title: 'Finances & Billing',
     icon: '💰', 
     features: [
-      { id: 'TigerCard', name: 'Digital Tiger Card' },
-      { id: 'eBill', name: 'Mock eBill & Tuition' },
-      { id: 'DiningBudgeter', name: 'Dining Dollars Budgeter' }
+      { id: 'DiningDollars', name: 'Dining Dollars' },
+      { id: 'EBill', name: 'eBill' },
+      { id: 'FinancialAid', name: 'Financial Aid' }
     ]
   },
   {
@@ -75,32 +79,58 @@ const menuData = [
 function StudentHub({ goBack }) {
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [activeFeature, setActiveFeature] = useState(null);
+  
+  // --- GLOBAL STATE FOR FINANCES ---
+  // Tracks money added in DiningDollars to reduce the eBill balance dynamically
+  const [totalDeposits, setTotalDeposits] = useState(0);
 
   const toggleCategory = (categoryId) => {
     setExpandedCategory(expandedCategory === categoryId ? null : categoryId);
   };
 
   const handleFeatureClick = (featureId) => {
-    const implementedFeatures = ['RateMyProfessor', 'TigerCard', 'AcademicPortal', 'CareerStatus', 'TigerDining', 'GreekLife', 'AcademicCalendar', 'CampusCalendar'];
+    // Array of all 10 completed features
+    const implementedFeatures = [
+      'RateMyProfessor', 'AcademicPortal', 'CareerStatus', 'AcademicCalendar', 
+      'TigerDining', 'GreekLife', 'CampusCalendar', 
+      'DiningDollars', 'EBill', 'FinancialAid'
+    ];
+    
     if (implementedFeatures.includes(featureId)) {
       setActiveFeature(featureId);
     } else {
-      alert("This feature is currently under construction!");
+      alert("This feature is currently under construction for the prototype!");
     }
   };
 
-  if (activeFeature === 'TigerCard') return <TigerCard goBack={() => setActiveFeature(null)} />;
+  // --- COMPONENT ROUTING ---
+  
+  // Academics & Career
   if (activeFeature === 'RateMyProfessor') return <RateMyProfessor goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'AcademicPortal') return <AcademicPortal goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'CareerStatus') return <CareerStatus goBack={() => setActiveFeature(null)} />;
+  if (activeFeature === 'AcademicCalendar') return <AcademicCalendar goBack={() => setActiveFeature(null)} />;
+  
+  // Campus Life & Dining
   if (activeFeature === 'TigerDining') return <TigerDining goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'GreekLife') return <GreekLife goBack={() => setActiveFeature(null)} />;
-  if (activeFeature === 'AcademicCalendar') return <AcademicCalendar goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'CampusCalendar') return <CampusCalendar goBack={() => setActiveFeature(null)} />;
 
+  // Finances & Billing (Notice how totalDeposits is handled here)
+  if (activeFeature === 'DiningDollars') {
+    return <DiningDollars goBack={() => setActiveFeature(null)} onDeposit={(amount) => setTotalDeposits(prev => prev + amount)} />;
+  }
+  if (activeFeature === 'EBill') {
+    return <EBill goBack={() => setActiveFeature(null)} deposits={totalDeposits} />;
+  }
+  if (activeFeature === 'FinancialAid') {
+    return <FinancialAid goBack={() => setActiveFeature(null)} />;
+  }
+
+  // --- MAIN MENU RENDER ---
   return (
-    <div className="main-menu" style={{ width: '100%', maxWidth: '600px' }}>
-      <button className="back-button" onClick={goBack} style={{ marginBottom: '20px' }}>&larr; Back</button>
+    <div className="main-menu" style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
+      <button className="back-button" onClick={goBack} style={{ marginBottom: '20px' }}>&larr; Back to App Screen</button>
       <h2 style={{ color: '#03244D', marginBottom: '30px', textAlign: 'left' }}>Student Hub</h2>
 
       <div className="accordion-container">
