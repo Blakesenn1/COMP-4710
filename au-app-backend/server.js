@@ -3,6 +3,7 @@ const cors = require('cors');
 const cron = require('node-cron');
 const Parser = require('rss-parser');
 const fetch = require('node-fetch'); 
+const cheerio = require('cheerio'); // Added for scraping
 
 const app = express();
 const parser = new Parser();
@@ -65,23 +66,42 @@ app.get('/api/canvas/user', async (req, res) => {
   } catch (e) { res.status(500).json({ name: "User" }); }
 });
 
-// 3. ACADEMIC CALENDAR (RSS)
+// 3. AUTOMATED ACADEMIC CALENDAR (SCRAPER)
 app.get('/api/academic-calendar', async (req, res) => {
   try {
-    // This hits the specific "Academic Calendar" department ID (17169) 
-    // and pulls the next 120 days of official deadlines.
-    const response = await fetch('https://calendar.auburn.edu/api/2/events?group_id=17169&days=120&pp=100');
-    const data = await response.json();
-    
-    // We send back the raw events object just like we do for campus calendar
-    res.json(data);
+    const response = await fetch('https://www.auburn.edu/about/academic-calendar/');
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    const scrapedEvents = [];
+
+    // Auburn's calendar uses tables. We loop through every row (tr)
+    $('table tr').each((i, el) => {
+      const cells = $(el).find('td');
+      if (cells.length >= 2) {
+        const dateRaw = $(cells[0]).text().trim();
+        const titleRaw = $(cells[1]).text().trim();
+
+        // Basic validation to ensure we're getting real data
+        if (dateRaw && titleRaw && !dateRaw.includes("Date")) {
+          scrapedEvents.push({
+            event: {
+              id: `deadline-${i}`,
+              title: titleRaw,
+              first_date: dateRaw // Note: Dates like "Jan 7" will be parsed by the frontend
+            }
+          });
+        }
+      }
+    });
+
+    res.json({ events: scrapedEvents });
   } catch (error) {
-    console.error("Academic API Error:", error);
+    console.error("Scraper Error:", error);
     res.status(500).json({ events: [] });
   }
 });
 
-// 4. CAMPUS CALENDAR (THE MISSING ROUTE)
+// 4. CAMPUS CALENDAR (PAGINATED)
 app.get('/api/campus-calendar', async (req, res) => {
   try {
     const allEvents = [];
@@ -94,7 +114,7 @@ app.get('/api/campus-calendar', async (req, res) => {
       if (data.events && data.events.length > 0) {
         allEvents.push(...data.events);
       } else {
-        break; // Stop if we hit an empty page
+        break; 
       }
     }
 
@@ -104,3 +124,7 @@ app.get('/api/campus-calendar', async (req, res) => {
     res.status(500).json({ events: [] });
   }
 });
+
+// Start Server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
