@@ -66,26 +66,19 @@ app.get('/api/canvas/user', async (req, res) => {
 });
 
 // 3. ACADEMIC CALENDAR (RSS)
-let cachedAcademicEvents = [];
-const updateAcademicCache = async () => {
-  try {
-    const feed = await parser.parseURL('https://calendar.auburn.edu/department/academic_calendar/events.rss');
-    if (feed && feed.items) {
-      cachedAcademicEvents = feed.items.map((item, index) => ({
-        id: `acad-${index}`,
-        title: item.title,
-        date: item.pubDate || item.isoDate,
-        description: item.contentSnippet || "Academic Deadline"
-      }));
-    }
-  } catch (error) { console.error("Academic RSS Error"); }
-};
-updateAcademicCache();
-cron.schedule('0 2 * * *', updateAcademicCache);
-
 app.get('/api/academic-calendar', async (req, res) => {
-  if (cachedAcademicEvents.length === 0) await updateAcademicCache();
-  res.json(cachedAcademicEvents);
+  try {
+    // This hits the specific "Academic Calendar" department ID (17169) 
+    // and pulls the next 120 days of official deadlines.
+    const response = await fetch('https://calendar.auburn.edu/api/2/events?group_id=17169&days=120&pp=100');
+    const data = await response.json();
+    
+    // We send back the raw events object just like we do for campus calendar
+    res.json(data);
+  } catch (error) {
+    console.error("Academic API Error:", error);
+    res.status(500).json({ events: [] });
+  }
 });
 
 // 4. CAMPUS CALENDAR (THE MISSING ROUTE)
