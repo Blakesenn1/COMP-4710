@@ -91,13 +91,23 @@ app.get('/api/academic-calendar', async (req, res) => {
 // 4. CAMPUS CALENDAR (THE MISSING ROUTE)
 app.get('/api/campus-calendar', async (req, res) => {
   try {
-    const response = await fetch('https://calendar.auburn.edu/api/2/events?days=60&pp=100');
-    const data = await response.json();
-    res.json(data);
+    const allEvents = [];
+    const pagesToFetch = 3;
+
+    for (let page = 1; page <= pagesToFetch; page++) {
+      const response = await fetch(`https://calendar.auburn.edu/api/2/events?days=90&pp=100&page=${page}`);
+      const data = await response.json();
+      
+      if (data.events && data.events.length > 0) {
+        allEvents.push(...data.events);
+      } else {
+        break; // Stop if we hit an empty page
+      }
+    }
+
+    res.json({ events: allEvents });
   } catch (error) {
+    console.error("Campus Proxy Error:", error);
     res.status(500).json({ events: [] });
   }
 });
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
