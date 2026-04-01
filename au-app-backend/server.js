@@ -72,32 +72,49 @@ app.get('/api/academic-calendar', async (req, res) => {
     const response = await fetch('https://www.auburn.edu/about/academic-calendar/');
     const html = await response.text();
     const $ = cheerio.load(html);
-    const scrapedEvents = [];
+    const sections = [];
+    let currentSection = null;
 
-    // Auburn's calendar uses tables. We loop through every row (tr)
-    $('table tr').each((i, el) => {
-      const cells = $(el).find('td');
-      if (cells.length >= 2) {
-        const dateRaw = $(cells[0]).text().trim();
-        const titleRaw = $(cells[1]).text().trim();
+    // We look at all tables and headers
+    $('h3, h4, table tr').each((i, el) => {
+      const text = $(el).text().trim();
 
-        // Basic validation to ensure we're getting real data
-        if (dateRaw && titleRaw && !dateRaw.includes("Date")) {
-          scrapedEvents.push({
-            event: {
-              id: `deadline-${i}`,
+      // Detect Section Headers (e.g., "2026 Spring Semester")
+      if (text.includes('Semester') && (text.includes('2025') || text.includes('2026') || text.includes('2027'))) {
+        currentSection = {
+          header: text,
+          events: []
+        };
+        sections.push(currentSection);
+      } 
+      
+      // If we are inside a section, grab the table rows
+      else if (currentSection && $(el).is('tr')) {
+        const cells = $(el).find('td');
+        if (cells.length >= 2) {
+          const dateRaw = $(cells[0]).text().trim();
+          const titleRaw = $(cells[1]).text().trim();
+
+          if (dateRaw && titleRaw && !dateRaw.toLowerCase().includes('date')) {
+            // Determine the year based on the header text (e.g., "2026")
+            const yearMatch = currentSection.header.match(/\d{4}/);
+            const year = yearMatch ? yearMatch[0] : "2026";
+
+            currentSection.events.push({
+              id: `acad-${i}`,
               title: titleRaw,
-              first_date: dateRaw // Note: Dates like "Jan 7" will be parsed by the frontend
-            }
-          });
+              first_date: dateRaw,
+              year: year // Store the year specifically for the frontend
+            });
+          }
         }
       }
     });
 
-    res.json({ events: scrapedEvents });
+    res.json({ sections }); // We now return 'sections' instead of a flat list
   } catch (error) {
     console.error("Scraper Error:", error);
-    res.status(500).json({ events: [] });
+    res.status(500).json({ sections: [] });
   }
 });
 
