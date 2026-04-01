@@ -60,10 +60,10 @@ function RateMyProfessor({ goBack }) {
 
   // --- MAIN SEARCH ---
   const handleSearch = async (selectedProf = null) => {
-    setSuggestions([]); // THE UI FIX: Instantly self-destruct the dropdown
+    setSuggestions([]); // Instantly self-destruct dropdown
     setError("");
 
-    // SCENARIO A: They clicked a dropdown suggestion
+    // Clicking a dropdown suggestion
     if (selectedProf) {
       setSearchTerm(`${selectedProf.firstName} ${selectedProf.lastName}`);
       setResultsList([]); 
@@ -71,7 +71,7 @@ function RateMyProfessor({ goBack }) {
       return;
     }
 
-    // SCENARIO B: They hit the Search button manually
+    // Hitting the Search button manually
     if (!searchTerm.trim()) return;
     
     setIsLoading(true);
@@ -79,7 +79,7 @@ function RateMyProfessor({ goBack }) {
     setResultsList([]);
 
     try {
-      // SMART FRONTEND FIX: Use the last word to cast the net
+      // Use the last word to cast the net
       const nameParts = searchTerm.trim().split(/\s+/);
       const queryWord = nameParts[nameParts.length - 1]; 
 

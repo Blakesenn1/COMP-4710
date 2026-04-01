@@ -120,7 +120,6 @@ function TigerDining({ goBack }) {
   const [selectedSpot, setSelectedSpot] = useState(null);
   
   const [reviews, setReviews] = useState([]);
-  const [newReview, setNewReview] = useState('');
   const [rating, setRating] = useState('5');
 
   useEffect(() => {
@@ -136,19 +135,16 @@ function TigerDining({ goBack }) {
 
   const handleAddReview = (e) => {
     e.preventDefault();
-    if (!newReview.trim()) return;
 
     const reviewObj = {
       id: Date.now().toString(),
       spotId: selectedSpot.id,
-      text: newReview.trim(),
       rating: parseInt(rating),
       date: new Date().toLocaleDateString()
     };
 
     setReviews([reviewObj, ...reviews]);
-    setNewReview('');
-    setRating('5');
+    setRating('5'); // Reset to default after submission
   };
 
   const getDynamicStatus = (openTimeStr, closeTimeStr) => {
@@ -179,6 +175,11 @@ function TigerDining({ goBack }) {
     const spotReviews = reviews.filter(r => r.spotId === selectedSpot.id);
     const currentStatus = getDynamicStatus(selectedSpot.open, selectedSpot.close);
 
+    // Calculate Average Rating
+    const avgRating = spotReviews.length > 0 
+      ? (spotReviews.reduce((sum, r) => sum + r.rating, 0) / spotReviews.length).toFixed(1) 
+      : 'N/A';
+
     return (
       <div className="feature-container" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
         <button className="back-button" onClick={() => setSelectedSpot(null)} style={{ marginBottom: '20px' }}>
@@ -186,8 +187,16 @@ function TigerDining({ goBack }) {
         </button>
         
         <div style={{ backgroundColor: '#03244D', color: 'white', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
-          <h2 style={{ margin: '0 0 5px 0' }}>{selectedSpot.name}</h2>
-          <div style={{ color: '#cbd5e1', fontSize: '0.9rem', marginBottom: '15px' }}>📍 Inside {selectedBuilding.name}</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <h2 style={{ margin: '0 0 5px 0' }}>{selectedSpot.name}</h2>
+              <div style={{ color: '#cbd5e1', fontSize: '0.9rem', marginBottom: '15px' }}>📍 Inside {selectedBuilding.name}</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+               <h2 style={{ margin: '0', color: '#DD550C' }}>{avgRating !== 'N/A' ? `★ ${avgRating}` : ''}</h2>
+            </div>
+          </div>
+          
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ backgroundColor: currentStatus.color, padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 'bold', color: currentStatus.label === 'Closes Soon' ? 'black' : 'white' }}>
               {currentStatus.label}
@@ -195,41 +204,31 @@ function TigerDining({ goBack }) {
           </div>
         </div>
 
-        {/* Review Form */}
+        {/* Updated Review Form - Stars Only */}
         <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
-          <h3 style={{ marginTop: 0, fontSize: '1.1rem', color: '#03244D' }}>Leave a Review</h3>
-          <form onSubmit={handleAddReview} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <select value={rating} onChange={(e) => setRating(e.target.value)} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #cbd5e1' }}>
+          <h3 style={{ marginTop: 0, fontSize: '1.1rem', color: '#03244D' }}>Rate this location</h3>
+          <form onSubmit={handleAddReview} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <select value={rating} onChange={(e) => setRating(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '1rem' }}>
               <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
               <option value="4">⭐⭐⭐⭐ (4/5)</option>
               <option value="3">⭐⭐⭐ (3/5)</option>
               <option value="2">⭐⭐ (2/5)</option>
               <option value="1">⭐ (1/5)</option>
             </select>
-            <textarea 
-              value={newReview} 
-              onChange={(e) => setNewReview(e.target.value)} 
-              placeholder="How was the food/line?" 
-              style={{ padding: '10px', borderRadius: '4px', border: '1px solid #cbd5e1', minHeight: '60px', fontFamily: 'inherit' }}
-              required
-            />
-            <button type="submit" style={{ backgroundColor: '#DD550C', color: 'white', border: 'none', padding: '10px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>Post Review</button>
+            <button type="submit" style={{ backgroundColor: '#DD550C', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>Submit</button>
           </form>
         </div>
 
-        {/* Review List */}
-        <h3 style={{ color: '#03244D', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px' }}>Student Reviews ({spotReviews.length})</h3>
+        {/* Updated Review List - Stars Only */}
+        <h3 style={{ color: '#03244D', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px' }}>Recent Ratings ({spotReviews.length})</h3>
         {spotReviews.length === 0 ? (
-          <p style={{ color: '#64748b', textAlign: 'center', padding: '20px', backgroundColor: '#f1f5f9', borderRadius: '8px' }}>Be the first to review {selectedSpot.name}!</p>
+          <p style={{ color: '#64748b', textAlign: 'center', padding: '20px', backgroundColor: '#f1f5f9', borderRadius: '8px' }}>Be the first to rate {selectedSpot.name}!</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {spotReviews.map(review => (
-              <div key={review.id} style={{ border: '1px solid #e2e8f0', padding: '15px', borderRadius: '8px', backgroundColor: 'white' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                  <span style={{ fontWeight: 'bold' }}>{'⭐'.repeat(review.rating)}</span>
-                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{review.date}</span>
-                </div>
-                <p style={{ margin: 0, color: '#475569', fontSize: '0.95rem' }}>{review.text}</p>
+              <div key={review.id} style={{ border: '1px solid #e2e8f0', padding: '12px 15px', borderRadius: '8px', backgroundColor: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '1.2rem' }}>{'⭐'.repeat(review.rating)}</span>
+                <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{review.date}</span>
               </div>
             ))}
           </div>
@@ -250,7 +249,7 @@ function TigerDining({ goBack }) {
         
         <h2 style={{color: '#03244D', marginTop: 0, marginBottom: '5px'}}>{selectedBuilding.name}</h2>
         <p style={{ color: '#64748b', marginTop: 0, marginBottom: '25px', fontSize: '0.95rem' }}>
-          Select a dining option below to view details and reviews.
+          Select a dining option below to view details and ratings.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

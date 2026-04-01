@@ -3,14 +3,10 @@ import React, { useState } from 'react';
 // --- ALL IMPLEMENTED FEATURE IMPORTS ---
 import RateMyProfessor from './RateMyProfessor';
 import AcademicPortal from './AcademicPortal';
-import CareerStatus from './CareerStatus';
 import AcademicCalendar from './AcademicCalendar';
 import TigerDining from './TigerDining';
 import GreekLife from './GreekLife';
 import CampusCalendar from './CampusCalendar';
-import DiningDollars from './DiningDollars';
-import EBill from './EBill';
-import FinancialAid from './FinancialAid';
 
 const menuData = [
   {
@@ -20,7 +16,6 @@ const menuData = [
     features: [
       { id: 'RateMyProfessor', name: 'Rate My Professor' },
       { id: 'AcademicPortal', name: 'Academic Portal' },
-      { id: 'CareerStatus', name: 'Career Status' },
       { id: 'AcademicCalendar', name: 'Academic Calendar' }
     ]
   },
@@ -32,16 +27,6 @@ const menuData = [
       { id: 'TigerDining', name: 'AU Dining' },
       { id: 'GreekLife', name: 'Greek Life' },
       { id: 'CampusCalendar', name: 'Campus Calendar' }
-    ]
-  },
-  {
-    id: 'finance',
-    title: 'Finances & Billing',
-    icon: '💰', 
-    features: [
-      { id: 'DiningDollars', name: 'Dining Dollars' },
-      { id: 'EBill', name: 'eBill' },
-      { id: 'FinancialAid', name: 'Financial Aid' }
     ]
   },
   {
@@ -79,10 +64,6 @@ const menuData = [
 function StudentHub({ goBack }) {
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [activeFeature, setActiveFeature] = useState(null);
-  
-  // --- GLOBAL STATE FOR FINANCES ---
-  // Tracks money added in DiningDollars to reduce the eBill balance dynamically
-  const [totalDeposits, setTotalDeposits] = useState(0);
 
   const toggleCategory = (categoryId) => {
     setExpandedCategory(expandedCategory === categoryId ? null : categoryId);
@@ -91,9 +72,8 @@ function StudentHub({ goBack }) {
   const handleFeatureClick = (featureId) => {
     // Array of all 10 completed features
     const implementedFeatures = [
-      'RateMyProfessor', 'AcademicPortal', 'CareerStatus', 'AcademicCalendar', 
-      'TigerDining', 'GreekLife', 'CampusCalendar', 
-      'DiningDollars', 'EBill', 'FinancialAid'
+      'RateMyProfessor', 'AcademicPortal', 'AcademicCalendar', 
+      'TigerDining', 'GreekLife', 'CampusCalendar'
     ];
     
     if (implementedFeatures.includes(featureId)) {
@@ -108,24 +88,12 @@ function StudentHub({ goBack }) {
   // Academics & Career
   if (activeFeature === 'RateMyProfessor') return <RateMyProfessor goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'AcademicPortal') return <AcademicPortal goBack={() => setActiveFeature(null)} />;
-  if (activeFeature === 'CareerStatus') return <CareerStatus goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'AcademicCalendar') return <AcademicCalendar goBack={() => setActiveFeature(null)} />;
   
   // Campus Life & Dining
   if (activeFeature === 'TigerDining') return <TigerDining goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'GreekLife') return <GreekLife goBack={() => setActiveFeature(null)} />;
   if (activeFeature === 'CampusCalendar') return <CampusCalendar goBack={() => setActiveFeature(null)} />;
-
-  // Finances & Billing (Notice how totalDeposits is handled here)
-  if (activeFeature === 'DiningDollars') {
-    return <DiningDollars goBack={() => setActiveFeature(null)} onDeposit={(amount) => setTotalDeposits(prev => prev + amount)} />;
-  }
-  if (activeFeature === 'EBill') {
-    return <EBill goBack={() => setActiveFeature(null)} deposits={totalDeposits} />;
-  }
-  if (activeFeature === 'FinancialAid') {
-    return <FinancialAid goBack={() => setActiveFeature(null)} />;
-  }
 
   // --- MAIN MENU RENDER ---
   return (

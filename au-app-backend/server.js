@@ -1,134 +1,103 @@
 const express = require('express');
 const cors = require('cors');
-const cheerio = require('cheerio');
+const cron = require('node-cron');
+const Parser = require('rss-parser');
+const fetch = require('node-fetch'); 
 
 const app = express();
+const parser = new Parser();
+
 app.use(cors());
 app.use(express.json());
 
 const AUBURN_SCHOOL_ID = "U2Nob29sLTYw";
 
-// ==========================================
-// 1. RATE MY PROFESSOR ROUTE (Intact)
-// ==========================================
+// 1. RATE MY PROFESSOR
 app.get('/api/rmp', async (req, res) => {
   const rawSearchTerm = req.query.name;
-  if (!rawSearchTerm) return res.status(400).json({ error: "Please provide a search term." });
-
+  if (!rawSearchTerm) return res.status(400).json({ error: "No name" });
   const nameParts = rawSearchTerm.trim().split(/\s+/);
   const safeQuery = nameParts[nameParts.length - 1]; 
-
   try {
     const response = await fetch('https://www.ratemyprofessors.com/graphql', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Basic dGVzdDp0ZXN0' },
       body: JSON.stringify({
-        query: `
-          query ($text: String!, $schoolID: ID!) {
-            newSearch {
-              teachers(query: {text: $text, schoolID: $schoolID}, first: 100) {
-                edges { node { firstName lastName department avgRating avgDifficulty numRatings } }
-              }
-            }
-          }
-        `,
+        query: `query ($text: String!, $schoolID: ID!) { newSearch { teachers(query: {text: $text, schoolID: $schoolID}, first: 100) { edges { node { firstName lastName department avgRating avgDifficulty numRatings } } } } }`,
         variables: { text: safeQuery, schoolID: AUBURN_SCHOOL_ID }
       })
     });
-
     const data = await response.json();
-    if (data.errors) return res.status(500).json({ error: "RMP rejected the query." });
-
     const rawTeachers = data.data?.newSearch?.teachers?.edges?.map(edge => edge.node) || [];
     const searchTermsLower = nameParts.map(t => t.toLowerCase());
-    
     const exactMatches = rawTeachers.filter(prof => {
         const fullName = `${prof.firstName || ""} ${prof.lastName || ""}`.toLowerCase();
         return searchTermsLower.every(term => fullName.includes(term));
     });
-
     res.json(exactMatches);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch data." });
-  }
+  } catch (error) { res.status(500).json({ error: "RMP error" }); }
 });
 
-// ==========================================
-// 2. CANVAS: LIVE COURSES ROUTE
-// ==========================================
+// 2. CANVAS ROUTES
 app.get('/api/canvas/courses', async (req, res) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: "No Canvas token provided." });
-
   try {
-    const canvasUrl = 'https://auburn.instructure.com/api/v1/courses?enrollment_state=active&include[]=total_scores';
-    const response = await fetch(canvasUrl, {
-      method: 'GET',
-      headers: { 'Authorization': authHeader, 'Accept': 'application/json' }
-    });
-
-    if (!response.ok) throw new Error("Canvas API rejected the token.");
+    const response = await fetch('https://auburn.instructure.com/api/v1/courses?enrollment_state=active&include[]=total_scores', { headers: { 'Authorization': authHeader } });
     const data = await response.json();
-    const activeCourses = data.filter(course => course.enrollments && course.enrollments.length > 0 && course.course_code);
-    res.json(activeCourses);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to connect to Canvas." });
-  }
+    res.json(Array.isArray(data) ? data.filter(c => c.course_code) : []);
+  } catch (e) { res.status(500).json([]); }
 });
 
-// ==========================================
-// 3. NEW: CANVAS: UPCOMING ASSIGNMENTS ROUTE
-// ==========================================
 app.get('/api/canvas/courses/:courseId/assignments', async (req, res) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: "No Canvas token provided." });
-
   try {
-    const { courseId } = req.params;
-    // We specifically ask Canvas for "upcoming" assignments, sorted by due date
-    const canvasUrl = `https://auburn.instructure.com/api/v1/courses/${courseId}/assignments?bucket=upcoming&order_by=due_at`;
-    
-    const response = await fetch(canvasUrl, {
-      method: 'GET',
-      headers: { 'Authorization': authHeader, 'Accept': 'application/json' }
-    });
+    const response = await fetch(`https://auburn.instructure.com/api/v1/courses/${req.params.courseId}/assignments?bucket=upcoming&order_by=due_at`, { headers: { 'Authorization': authHeader } });
+    res.json(await response.json());
+  } catch (e) { res.status(500).json([]); }
+});
 
-    if (!response.ok) throw new Error("Failed to fetch assignments.");
-    const assignments = await response.json();
-    
-    res.json(assignments);
+app.get('/api/canvas/user', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  try {
+    const response = await fetch('https://auburn.instructure.com/api/v1/users/self', { headers: { 'Authorization': authHeader } });
+    const data = await response.json();
+    res.json({ name: data.short_name || data.name });
+  } catch (e) { res.status(500).json({ name: "User" }); }
+});
+
+// 3. ACADEMIC CALENDAR (RSS)
+let cachedAcademicEvents = [];
+const updateAcademicCache = async () => {
+  try {
+    const feed = await parser.parseURL('https://calendar.auburn.edu/department/academic_calendar/events.rss');
+    if (feed && feed.items) {
+      cachedAcademicEvents = feed.items.map((item, index) => ({
+        id: `acad-${index}`,
+        title: item.title,
+        date: item.pubDate || item.isoDate,
+        description: item.contentSnippet || "Academic Deadline"
+      }));
+    }
+  } catch (error) { console.error("Academic RSS Error"); }
+};
+updateAcademicCache();
+cron.schedule('0 2 * * *', updateAcademicCache);
+
+app.get('/api/academic-calendar', async (req, res) => {
+  if (cachedAcademicEvents.length === 0) await updateAcademicCache();
+  res.json(cachedAcademicEvents);
+});
+
+// 4. CAMPUS CALENDAR (THE MISSING ROUTE)
+app.get('/api/campus-calendar', async (req, res) => {
+  try {
+    const response = await fetch('https://calendar.auburn.edu/api/2/events?days=60&pp=100');
+    const data = await response.json();
+    res.json(data);
   } catch (error) {
-    console.error("[CANVAS] Assignments Error:", error);
-    res.status(500).json({ error: "Failed to fetch assignments." });
+    res.status(500).json({ events: [] });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Auburn App Backend running on port ${PORT}`);
-});
-
-// ==========================================
-// 4. NEW: CANVAS: USER PROFILE ROUTE
-// ==========================================
-app.get('/api/canvas/user', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: "No Canvas token provided." });
-
-  try {
-    const canvasUrl = 'https://auburn.instructure.com/api/v1/users/self';
-    const response = await fetch(canvasUrl, {
-      method: 'GET',
-      headers: { 'Authorization': authHeader, 'Accept': 'application/json' }
-    });
-
-    if (!response.ok) throw new Error("Failed to fetch user.");
-    const user = await response.json();
-    
-    // Canvas usually provides 'short_name' (e.g., "Blake Senn" instead of "Senn, Adam Blake")
-    res.json({ name: user.short_name || user.name }); 
-  } catch (error) {
-    console.error("[CANVAS] User Error:", error);
-    res.status(500).json({ error: "Failed to fetch user profile." });
-  }
-});
+app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
