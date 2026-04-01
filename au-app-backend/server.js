@@ -75,43 +75,39 @@ app.get('/api/academic-calendar', async (req, res) => {
     const sections = [];
     let currentSection = null;
 
-    // We look at all tables and headers
-    $('h3, h4, table tr').each((i, el) => {
+    // Look for anything that looks like a Semester Header (h2, h3, h4, or bold p)
+    $('h2, h3, h4, p strong, table').each((i, el) => {
       const text = $(el).text().trim();
+      const isHeader = /202[5-7].*Semester/i.test(text);
 
-      // Detect Section Headers (e.g., "2026 Spring Semester")
-      if (text.includes('Semester') && (text.includes('2025') || text.includes('2026') || text.includes('2027'))) {
-        currentSection = {
-          header: text,
-          events: []
-        };
+      if (isHeader) {
+        currentSection = { header: text, events: [] };
         sections.push(currentSection);
       } 
       
-      // If we are inside a section, grab the table rows
-      else if (currentSection && $(el).is('tr')) {
-        const cells = $(el).find('td');
-        if (cells.length >= 2) {
-          const dateRaw = $(cells[0]).text().trim();
-          const titleRaw = $(cells[1]).text().trim();
+      // If we encounter a table, it belongs to the most recently found header
+      else if (currentSection && $(el).is('table')) {
+        $(el).find('tr').each((_, tr) => {
+          const cells = $(tr).find('td');
+          if (cells.length >= 2) {
+            const dateRaw = $(cells[0]).text().trim();
+            const titleRaw = $(cells[1]).text().trim();
 
-          if (dateRaw && titleRaw && !dateRaw.toLowerCase().includes('date')) {
-            // Determine the year based on the header text (e.g., "2026")
-            const yearMatch = currentSection.header.match(/\d{4}/);
-            const year = yearMatch ? yearMatch[0] : "2026";
-
-            currentSection.events.push({
-              id: `acad-${i}`,
-              title: titleRaw,
-              first_date: dateRaw,
-              year: year // Store the year specifically for the frontend
-            });
+            if (dateRaw && titleRaw && !/date/i.test(dateRaw)) {
+              const yearMatch = currentSection.header.match(/\d{4}/);
+              currentSection.events.push({
+                id: `acad-${i}-${_}`,
+                title: titleRaw,
+                first_date: dateRaw,
+                year: yearMatch ? yearMatch[0] : "2026"
+              });
+            }
           }
-        }
+        });
       }
     });
 
-    res.json({ sections }); // We now return 'sections' instead of a flat list
+    res.json({ sections });
   } catch (error) {
     console.error("Scraper Error:", error);
     res.status(500).json({ sections: [] });
