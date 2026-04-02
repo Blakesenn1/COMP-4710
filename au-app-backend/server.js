@@ -67,50 +67,55 @@ app.get('/api/canvas/user', async (req, res) => {
 });
 
 // 3. AUTOMATED ACADEMIC CALENDAR (SCRAPER)
+// 3. AUTOMATED ACADEMIC CALENDAR (SCRAPER)
 app.get('/api/academic-calendar', async (req, res) => {
   try {
     const response = await fetch('https://www.auburn.edu/about/academic-calendar/');
     const html = await response.text();
     const $ = cheerio.load(html);
-    const sections = [];
-    let currentSection = null;
+    const scrapedEvents = [];
+    let currentHeader = "Upcoming Deadlines"; // Default header if none is found first
+    let currentYear = new Date().getFullYear().toString();
 
-    // Look for anything that looks like a Semester Header (h2, h3, h4, or bold p)
-    $('h2, h3, h4, p strong, table').each((i, el) => {
+    // Look at headers AND table rows
+    $('h2, h3, h4, p strong, table tr').each((i, el) => {
+      const isRow = $(el).is('tr');
       const text = $(el).text().trim();
-      const isHeader = /202[5-7].*Semester/i.test(text);
 
-      if (isHeader) {
-        currentSection = { header: text, events: [] };
-        sections.push(currentSection);
-      } 
-      
-      // If we encounter a table, it belongs to the most recently found header
-      else if (currentSection && $(el).is('table')) {
-        $(el).find('tr').each((_, tr) => {
-          const cells = $(tr).find('td');
-          if (cells.length >= 2) {
-            const dateRaw = $(cells[0]).text().trim();
-            const titleRaw = $(cells[1]).text().trim();
+      if (!isRow) {
+        // If it's a header, check if it looks like a semester (e.g., "2026 Spring Semester")
+        if (text.toLowerCase().includes('semester')) {
+          currentHeader = text;
+          // Try to pull the year out of the header text
+          const yearMatch = text.match(/\d{4}/);
+          if (yearMatch) currentYear = yearMatch[0];
+        }
+      } else {
+        // If it's a table row, extract the data
+        const cells = $(el).find('td');
+        if (cells.length >= 2) {
+          const dateRaw = $(cells[0]).text().trim();
+          const titleRaw = $(cells[1]).text().trim();
 
-            if (dateRaw && titleRaw && !/date/i.test(dateRaw)) {
-              const yearMatch = currentSection.header.match(/\d{4}/);
-              currentSection.events.push({
-                id: `acad-${i}-${_}`,
+          if (dateRaw && titleRaw && !dateRaw.toLowerCase().includes("date")) {
+            scrapedEvents.push({
+              event: {
+                id: `deadline-${i}`,
                 title: titleRaw,
-                first_date: dateRaw,
-                year: yearMatch ? yearMatch[0] : "2026"
-              });
-            }
+                first_date: dateRaw, // e.g., "Jan 7"
+                semester_header: currentHeader, // e.g., "2026 Spring Semester"
+                year: currentYear // e.g., "2026"
+              }
+            });
           }
-        });
+        }
       }
     });
 
-    res.json({ sections });
+    res.json({ events: scrapedEvents });
   } catch (error) {
     console.error("Scraper Error:", error);
-    res.status(500).json({ sections: [] });
+    res.status(500).json({ events: [] });
   }
 });
 
