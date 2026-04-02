@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 function AcademicCalendar({ goBack }) {
-  const [events, setEvents] = useState([]);
+  const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [visibleCount, setVisibleCount] = useState(15);
 
   useEffect(() => {
     const fetchAcademicData = async () => {
@@ -11,21 +10,28 @@ function AcademicCalendar({ goBack }) {
         const response = await fetch('https://comp-4710.onrender.com/api/academic-calendar');
         const data = await response.json();
         
-        const eventList = data.events || [];
+        // Match the backend! Look for 'sections', not 'events'
+        const rawSections = data.sections || [];
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const formattedEvents = eventList.map(item => ({
-          id: item.event.id,
-          title: item.event.title,
-          date: item.event.first_date,
-          description: item.event.description_text || "Official University Deadline"
-        })).filter(e => new Date(e.date) >= today);
+        // Process sections: filter out past events and empty sections
+        const processedSections = rawSections.map(section => {
+          const futureEvents = section.events.filter(event => {
+            const eventDate = new Date(event.date_parse);
+            // Check if valid date and if it's today or in the future
+            return !isNaN(eventDate) && eventDate >= today;
+          });
 
-        formattedEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
-        setEvents(formattedEvents);
+          return {
+            ...section,
+            events: futureEvents
+          };
+        }).filter(section => section.events.length > 0);
+
+        setSections(processedSections);
       } catch (error) {
-        console.error("Academic Fetch Error:", error);
+        console.error("Fetch Error:", error);
       } finally {
         setLoading(false);
       }
@@ -33,39 +39,46 @@ function AcademicCalendar({ goBack }) {
     fetchAcademicData();
   }, []);
 
-  const displayedEvents = events.slice(0, visibleCount);
-
   return (
-    <div className="feature-container" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
+    <div className="feature-container" style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'left' }}>
       <button className="back-button" onClick={goBack} style={{ marginBottom: '20px' }}>&larr; Back</button>
       <h2 style={{color: '#03244D', marginTop: 0}}>Academic Calendar</h2>
-      <p style={{ color: '#64748b', marginBottom: '25px', fontSize: '0.9rem' }}>Official University deadlines and term dates.</p>
       
-      {loading ? <p>Loading official AU dates...</p> : (
-        <div style={{ borderLeft: '2px solid #e2e8f0', paddingLeft: '20px', marginLeft: '10px' }}>
-          {events.length === 0 ? (
-            <p style={{ color: '#64748b' }}>No upcoming deadlines found for the next 120 days.</p>
+      {loading ? <p>Loading official term dates...</p> : (
+        <div>
+          {sections.length === 0 ? (
+             <p style={{ color: '#64748b', fontStyle: 'italic' }}>No upcoming deadlines found.</p>
           ) : (
-            <>
-              {displayedEvents.map(event => (
-                <div key={event.id} style={{ marginBottom: '25px' }}>
-                  <div style={{ backgroundColor: 'white', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                    <span style={{ fontSize: '0.85rem', color: '#DD550C', fontWeight: 'bold' }}>
-                      {new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                    </span>
-                    <h3 style={{ margin: '5px 0 5px 0', color: '#03244D', fontSize: '1.1rem' }}>{event.title}</h3>
-                  </div>
+            sections.map((section, sIndex) => (
+              <div key={sIndex} style={{ marginBottom: '40px' }}>
+                
+                {/* The Semester Header (Mimicking Auburn's Blue Text) */}
+                <h3 style={{ 
+                  color: '#03244D', 
+                  borderBottom: '2px solid #DD550C', 
+                  paddingBottom: '8px',
+                  fontSize: '1.4rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  marginBottom: '20px'
+                }}>
+                  {section.header}
+                </h3>
+                
+                <div style={{ borderLeft: '3px solid #f2f4f7', paddingLeft: '15px' }}>
+                  {section.events.map(event => (
+                    <div key={event.id} style={{ marginBottom: '15px', padding: '15px', backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <span style={{ color: '#DD550C', fontWeight: 'bold' }}>
+                        {/* We display the raw text here so "Apr 25-26" looks right */}
+                        {event.date_display}
+                      </span>
+                      <h4 style={{ margin: '5px 0 0 0', color: '#03244D', fontSize: '1.05rem' }}>{event.title}</h4>
+                    </div>
+                  ))}
                 </div>
-              ))}
-              {visibleCount < events.length && (
-                <button 
-                  onClick={() => setVisibleCount(prev => prev + 15)} 
-                  style={{ width: '100%', padding: '12px', backgroundColor: '#DD550C', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
-                >
-                  Load More Deadlines ↓
-                </button>
-              )}
-            </>
+                
+              </div>
+            ))
           )}
         </div>
       )}
