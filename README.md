@@ -1,6 +1,6 @@
 # React + Vite
 
-### Here is the main site for the app: https://main.d2d5shtjqle2g2.amplifyapp.com/
+### Main site for app: https://main.d2d5shtjqle2g2.amplifyapp.com/
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
