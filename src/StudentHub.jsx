@@ -97,36 +97,64 @@ function StudentHub({ goBack }) {
 
   // --- MAIN MENU RENDER ---
   return (
-    <div className="main-menu" style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
-      <button className="back-button" onClick={goBack} style={{ marginBottom: '20px' }}>&larr; Back to Home Screen</button>
-      <h2 style={{ color: '#03244D', marginBottom: '30px', textAlign: 'left' }}>Student Hub</h2>
+    <div style={{ 
+      padding: '40px 20px', 
+      width: '100vw', 
+      maxWidth: '100%', 
+      minHeight: '100vh',
+      boxSizing: 'border-box', 
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center', 
+      backgroundColor: '#f9f9f9',
+      overflowX: 'hidden'
+    }}>
+      
+      <div className="main-menu" style={{ width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column' }}>
+        
+        <div style={{ display: 'flex', justifyContent: 'flex-start', width: '100%', marginBottom: '20px' }}>
+          <button 
+            className="back-button" 
+            onClick={goBack} 
+            style={{ 
+              background: 'none', border: 'none', color: '#64748b', fontSize: '1rem', 
+              fontWeight: 'bold', cursor: 'pointer', padding: '10px 0', textAlign: 'left'
+            }}
+          >
+            &larr; Back to Home Screen
+          </button>
+        </div>
+        
+        <h2 style={{ color: '#03244D', marginBottom: '30px', textAlign: 'left', fontSize: '2rem' }}>Student Hub</h2>
 
-      <div className="accordion-container">
-        {menuData.map((category) => (
-          <div key={category.id} className="accordion-card" style={{ marginBottom: '10px' }}>
-            <div className="accordion-header" onClick={() => toggleCategory(category.id)}>
-              <div className="header-left">
-                <span className="accordion-icon">{category.icon}</span>
-                <span>{category.title}</span>
+        <div className="accordion-container">
+          {menuData.map((category) => (
+            <div key={category.id} className="accordion-card" style={{ marginBottom: '10px' }}>
+              <div className="accordion-header" onClick={() => toggleCategory(category.id)}>
+                <div className="header-left">
+                  <span className="accordion-icon">{category.icon}</span>
+                  <span>{category.title}</span>
+                </div>
+                <span>{expandedCategory === category.id ? '▼' : '▶'}</span>
               </div>
-              <span>{expandedCategory === category.id ? '▼' : '▶'}</span>
+
+              {expandedCategory === category.id && (
+                <div className="accordion-body">
+                  {category.features.map((feature) => (
+                    <button 
+                      key={feature.id} 
+                      className="accordion-item"
+                      onClick={() => handleFeatureClick(feature.id)}
+                    >
+                      {feature.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+          ))}
+        </div>
 
-            {expandedCategory === category.id && (
-              <div className="accordion-body">
-                {category.features.map((feature) => (
-                  <button 
-                    key={feature.id} 
-                    className="accordion-item"
-                    onClick={() => handleFeatureClick(feature.id)}
-                  >
-                    {feature.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
       </div>
     </div>
   );
