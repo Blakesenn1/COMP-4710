@@ -98,7 +98,7 @@ function StudentHub({ goBack }) {
   // --- MAIN MENU RENDER ---
   return (
     <div className="main-menu" style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
-      <button className="back-button" onClick={goBack} style={{ marginBottom: '20px' }}>&larr; Back to App Screen</button>
+      <button className="back-button" onClick={goBack} style={{ marginBottom: '20px' }}>&larr; Back to Home Screen</button>
       <h2 style={{ color: '#03244D', marginBottom: '30px', textAlign: 'left' }}>Student Hub</h2>
 
       <div className="accordion-container">
