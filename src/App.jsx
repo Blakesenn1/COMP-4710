@@ -302,28 +302,39 @@ function App() {
           <p style={{ color: '#64748b', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'left', marginBottom: '8px', fontWeight: 'bold' }}>
             Quick Campus Tools
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
             <a 
               href="https://auburn.skedda.com/booking" target="_blank" rel="noopener noreferrer"
               style={{ 
-                backgroundColor: 'white', padding: '15px 10px', borderRadius: '12px', 
+                backgroundColor: 'white', padding: '15px 5px', borderRadius: '12px', 
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0',
                 textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px'
               }}
             >
-              <span style={{ fontSize: '1.8rem' }}>📚</span>
-              <span style={{ color: '#0f172a', fontSize: '0.85rem', fontWeight: 'bold', textAlign: 'center' }}>Book A<br/>Study Room</span>
+              <span style={{ fontSize: '1.6rem' }}>📚</span>
+              <span style={{ color: '#0f172a', fontSize: '0.75rem', fontWeight: 'bold', textAlign: 'center', lineHeight: '1.2' }}>Book A<br/>Study Room</span>
             </a>
             <a 
               href="https://map.auburn.edu/?id=2121#!ct/75499,84750,84863,86680?s/" target="_blank" rel="noopener noreferrer"
               style={{ 
-                backgroundColor: 'white', padding: '15px 10px', borderRadius: '12px', 
+                backgroundColor: 'white', padding: '15px 5px', borderRadius: '12px', 
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0',
                 textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px'
               }}
             >
-              <span style={{ fontSize: '1.8rem' }}>🗺️</span>
-              <span style={{ color: '#0f172a', fontSize: '0.85rem', fontWeight: 'bold', textAlign: 'center' }}>Interactive<br/>Campus Map</span>
+              <span style={{ fontSize: '1.6rem' }}>🗺️</span>
+              <span style={{ color: '#0f172a', fontSize: '0.75rem', fontWeight: 'bold', textAlign: 'center', lineHeight: '1.2' }}>Interactive<br/>Map</span>
+            </a>
+            <a 
+              href="https://auburn.etaspot.net/" target="_blank" rel="noopener noreferrer"
+              style={{ 
+                backgroundColor: 'white', padding: '15px 5px', borderRadius: '12px', 
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0',
+                textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px'
+              }}
+            >
+              <span style={{ fontSize: '1.6rem' }}>🚌</span>
+              <span style={{ color: '#0f172a', fontSize: '0.75rem', fontWeight: 'bold', textAlign: 'center', lineHeight: '1.2' }}>Tiger Transit<br/>Tracker</span>
             </a>
           </div>
         </div>
