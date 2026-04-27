@@ -1,0 +1,16 @@
+{
+  "short_name": "AU App",
+  "name": "Auburn University Student App",
+  "icons": [
+    {
+      "src": "/au_logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#03244D",
+  "background_color": "#f4f4f5"
+}
